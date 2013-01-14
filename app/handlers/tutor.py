@@ -4,6 +4,9 @@ from config.settings import relay
 from config import settings
 from lamson import view, mail
 from ..webapp.tutor.models import TutorGroup
+from aliases.models import *
+from django.contrib.auth.models import User
+from mftutor import siteconfig
 
 @route("(address)@(host)", address=".+")
 @stateless
@@ -15,12 +18,37 @@ def RELAY(message, **kwargs):
     relay_unknown(message, **kwargs)
     return RELAY
 
+def resolve_alias(recipient, visited=None):
+    """Given a recipient, return the transitive closure of the alias graph."""
+    if visited:
+        visited = frozenset([recipient]).union(visited)
+    else:
+        visited = frozenset([recipient])
+
+    aliases = list(Alias.objects.filter(source=recipient))
+    result = frozenset([recipient])
+    for a in aliases:
+        if a.destination in visited:
+            logging.warning("Cycle involving "+a)
+        else:
+            result = result.union(resolve_alias(a.destination, visited))
+
+    return result
+
+#def resolve_aliases(recipients):
+#    result = frozenset()
+#    for rcp in recipients:
+#        result = result.union(resolve_alias(result))
+#    return result
+
 def tutor_group_mails(tutorgroupname):
     """Given a group name, return email addresses of all people in the
     group."""
-    tutorgroup = TutorGroup.objects.get(handle=tutorgroupname)
-    recipients = tutorgroup.tutor_set.all()
-    return [t.profile.user.email for t in recipients]
+    groups = resolve_alias(tutorgroupname)
+    logging.debug("Resolved group "+tutorgroupname+" to: "+str(tuple(groups)))
+    recipients = User.objects.filter(tutorprofile__tutor__year__exact = siteconfig.year,
+            tutorprofile__tutor__groups__in=tuple(groups))
+    return [t.email for t in recipients]
 
 def relay_tutorgroup(message, address, host):
     """Try to relay the message to the given group."""
