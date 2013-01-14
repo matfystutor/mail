@@ -3,6 +3,8 @@ import logging
 import os
 import sys
 
+domain = 'matfystutor.dk'
+
 relay_config = {'host': 'localhost', 'port': 25}
 
 receiver_config = {'host': 'localhost', 'port': 9001}
