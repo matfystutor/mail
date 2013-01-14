@@ -8,7 +8,7 @@ from ..webapp.tutor.models import TutorGroup
 @route("(address)@(host)", address=".+")
 @stateless
 def RELAY(message, **kwargs):
-    logging.debug("Got a message for "+kwargs['address']+", To: "+message['to'])
+    logging.debug(u"Got a message for "+kwargs['address'].decode('utf-8')+u", To: "+message['to'])
     if relay_tutorgroup(message, **kwargs):
         return RELAY
 
@@ -35,14 +35,16 @@ def relay_unknown(message, address, host):
     """Let the admin know that the message could not be delivered."""
     try:
         emails = tutor_group_mails(settings.admin_group)
+        dest = settings.admin_group + '@' + settings.domain
     except TutorGroup.DoesNotExist:
         emails = settings.fallback_admin
+        dest = settings.fallback_admin
     body = 'Failed to deliver the following message.\n\n'
     for k in message.keys():
         body += k+': '+message[k]+'\n'
     body += '\n'+message.body()
     resp = mail.MailResponse(
-            To=None,
+            To=dest,
             From=settings.default_from,
             Subject='[lamson unknown dest] '+message['subject'],
             Body=body)
