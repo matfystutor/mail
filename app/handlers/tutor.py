@@ -18,29 +18,6 @@ def RELAY(message, **kwargs):
     relay_unknown(message, **kwargs)
     return RELAY
 
-def resolve_alias(recipient, visited=None):
-    """Given a recipient, return the transitive closure of the alias graph."""
-    if visited:
-        visited = frozenset([recipient]).union(visited)
-    else:
-        visited = frozenset([recipient])
-
-    aliases = list(Alias.objects.filter(source=recipient))
-    result = frozenset([recipient])
-    for a in aliases:
-        if a.destination in visited:
-            logging.warning("Cycle involving "+a)
-        else:
-            result = result.union(resolve_alias(a.destination, visited))
-
-    return result
-
-#def resolve_aliases(recipients):
-#    result = frozenset()
-#    for rcp in recipients:
-#        result = result.union(resolve_alias(result))
-#    return result
-
 def tutor_group_mails(tutorgroupname):
     """Given a group name, return email addresses of all people in the
     group."""
@@ -55,6 +32,9 @@ def relay_tutorgroup(message, address, host):
     try:
         emails = tutor_group_mails(address)
     except TutorGroup.DoesNotExist:
+        return False
+    logging.info("Message from "+message['from']+" to \""+address+"\" ("+str(len(emails))+" recipients): \""+message['subject']+"\"")
+    if not emails:
         return False
     relay.deliver(message, To=emails)
     return True
