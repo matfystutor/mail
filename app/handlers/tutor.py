@@ -54,16 +54,16 @@ def relay_unknown(message, address, host):
     except TutorGroup.DoesNotExist:
         emails = settings.fallback_admin
         dest = settings.fallback_admin
-    body = 'Failed to deliver the following message.\n\n'
+    body = u'Failed to deliver the following message to '+unicode(address)+u'@'+unicode(host)+u'.\n\n'
     for k in message.keys():
-        body += k+': '+message[k]+'\n'
-    body += '\n'+message.body()
+        body += unicode(k)+u': '+unicode(message[k])+u'\n'
+    body += u'\n'+unicode(message.body())
     resp = mail.MailResponse(
             To=dest,
             From=settings.default_from,
-            Subject='[lamson unknown dest] '+message['subject'],
+            Subject=u'[lamson unknown dest] '+unicode(message['subject']),
             Body=body)
-    resp.attach_all_parts(message)
+    #resp.attach_all_parts(message)
     relay.deliver(resp, To=emails)
     return True
 
