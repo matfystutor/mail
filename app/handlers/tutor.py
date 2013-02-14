@@ -3,10 +3,11 @@ from lamson.routing import route, route_like, stateless
 from config.settings import relay
 from config import settings
 from lamson import view, mail
-from ..webapp.tutor.models import TutorGroup
+from web.tutor.models import TutorGroup
 from aliases.models import *
+from activation.models import ProfileActivation
 from django.contrib.auth.models import User
-from mftutor import siteconfig
+from mftutor.settings import YEAR
 
 @route("(address)@(host)", address=".+")
 @stateless
@@ -23,9 +24,15 @@ def tutor_group_mails(tutorgroupname):
     group."""
     groups = resolve_alias(tutorgroupname)
     logging.debug("Resolved group "+tutorgroupname+" to: "+str(tuple(groups)))
-    recipients = User.objects.filter(tutorprofile__tutor__year__exact = siteconfig.year,
+    recipients = User.objects.filter(
+            tutorprofile__tutor__year__exact = YEAR,
             tutorprofile__tutor__groups__in=tuple(groups))
-    return [t.email for t in recipients]
+    nonactivated_recipients = ProfileActivation.objects.filter(
+            profile__tutor__year__exact=YEAR,
+            profile__tutor__groups__in=tuple(groups),
+            profile__user=None)
+    emails = [t.email for t in recipients] + [pa.email for pa in nonactivated_recipients]
+    return emails
 
 def relay_tutorgroup(message, address, host):
     """Try to relay the message to the given group."""
