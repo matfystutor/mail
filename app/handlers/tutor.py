@@ -3,10 +3,11 @@ from lamson.routing import route, route_like, stateless
 from config.settings import relay
 from config import settings
 from lamson import view, mail
-from web.tutor.models import TutorGroup
-from aliases.models import *
-from activation.models import ProfileActivation
+
 from django.contrib.auth.models import User
+from mftutor.tutor.models import TutorGroup
+from mftutor.aliases.models import *
+from mftutor.activation.models import ProfileActivation
 from mftutor.settings import YEAR
 
 @route("(address)@(host)", address=".+")
