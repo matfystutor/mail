@@ -13,7 +13,7 @@ from mftutor.settings import YEAR
 @route("(address)@(host)", address=".+")
 @stateless
 def RELAY(message, **kwargs):
-    logging.debug(u"Got a message for "+kwargs['address'].decode('utf-8')+u", To: "+message['to'])
+    logging.debug(u"Got a message for "+kwargs['address'].decode('utf-8')+u", To: "+unicode(message['to']))
     if relay_tutorgroup(message, **kwargs):
         return RELAY
 
