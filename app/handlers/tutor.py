@@ -4,10 +4,8 @@ from config.settings import relay
 from config import settings
 from lamson import view, mail
 
-from django.contrib.auth.models import User
-from mftutor.tutor.models import TutorGroup, RusClass
+from mftutor.tutor.models import TutorProfile, TutorGroup, RusClass
 from mftutor.aliases.models import *
-from mftutor.activation.models import ProfileActivation
 from mftutor.settings import YEAR, RUSCLASS_BASE, TUTORS_PREFIX
 
 @route("(address)@(host)", address=".+")
@@ -28,14 +26,10 @@ def tutor_group_mails(tutorgroupname):
     group."""
     groups = resolve_alias(tutorgroupname)
     logging.debug("Resolved group "+tutorgroupname+" to: "+str(tuple(groups)))
-    recipients = User.objects.filter(
-            tutorprofile__tutor__year__exact = YEAR,
-            tutorprofile__tutor__groups__in=tuple(groups))
-    nonactivated_recipients = ProfileActivation.objects.filter(
-            profile__tutor__year__exact=YEAR,
-            profile__tutor__groups__in=tuple(groups),
-            profile__user=None)
-    emails = [t.email for t in recipients] + [pa.email for pa in nonactivated_recipients]
+    recipients = TutorProfile.objects.filter(
+            tutor__year__exact = YEAR,
+            tutor__groups__in=tuple(groups))
+    emails = [t.email for t in recipients]
     return emails
 
 def relay_tutorgroup(message, address, host):
@@ -73,25 +67,19 @@ def relay_rusclass(message, address, host):
             .format(address, handle, tutors_only))
 
     if address in handles:
-        russes = [u.email for u in User.objects.filter(
-                tutorprofile__rus__year__exact=YEAR,
-                tutorprofile__rus__rusclass__handle__exact=address)]
-        tutors = [u.email for u in User.objects.filter(
-                tutorprofile__tutor__year__exact=YEAR,
-                tutorprofile__tutor__rusclass__handle__exact=address)]
-        tutors += [pa.email for pa in ProfileActivation.objects.filter(
-                profile__tutor__year__exact=YEAR,
-                profile__tutor__rusclass__handle__exact=address)]
+        russes = [tp.email for tp in TutorProfile.objects.filter(
+                rus__year__exact=YEAR,
+                rus__rusclass__handle__exact=address)]
+        tutors = [tp.email for tp in TutorProfile.objects.filter(
+                tutor__year__exact=YEAR,
+                tutor__rusclass__handle__exact=address)]
     elif address in handle_base:
-        russes = [u.email for u in User.objects.filter(
-                tutorprofile__rus__year__exact=YEAR,
-                tutorprofile__rus__rusclass__in=handle_base[address])]
-        tutors = [u.email for u in User.objects.filter(
-                tutorprofile__tutor__year__exact=YEAR,
-                tutorprofile__tutor__rusclass__in=handle_base[address])]
-        tutors += [pa.email for pa in ProfileActivation.objects.filter(
-                profile__tutor__year__exact=YEAR,
-                profile__tutor__rusclass__in=handle_base[address])]
+        russes = [tp.email for tp in TutorProfile.objects.filter(
+                rus__year__exact=YEAR,
+                rus__rusclass__in=handle_base[address])]
+        tutors = [tp.email for tp in TutorProfile.objects.filter(
+                tutor__year__exact=YEAR,
+                tutor__rusclass__in=handle_base[address])]
     else:
         return False
 
