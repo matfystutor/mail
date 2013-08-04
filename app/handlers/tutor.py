@@ -46,8 +46,9 @@ def relay_tutorgroup(message, address, host):
     return True
 
 def relay_rusclass(message, address, host):
-    handle_base = {handle: []
-            for official, handle, internal in RUSCLASS_BASE}
+    handle_base = {}
+    for official, handle, internal in RUSCLASS_BASE:
+        handle_base[handle] = []
     handles = {}
     for rusclass in RusClass.objects.filter(year__exact=YEAR):
         handles[rusclass.handle] = rusclass
