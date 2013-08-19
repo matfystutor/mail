@@ -67,20 +67,20 @@ def relay_rusclass(message, address, host):
     logging.debug("Address [{0}] is handle [{1}], tutors_only = {2}"
             .format(address, handle, tutors_only))
 
-    if address in handles:
+    if handle in handles:
         russes = [tp.email for tp in TutorProfile.objects.filter(
                 rus__year__exact=YEAR,
-                rus__rusclass__handle__exact=address)]
+                rus__rusclass__handle__exact=handle)]
         tutors = [tp.email for tp in TutorProfile.objects.filter(
                 tutor__year__exact=YEAR,
-                tutor__rusclass__handle__exact=address)]
-    elif address in handle_base:
+                tutor__rusclass__handle__exact=handle)]
+    elif handle in handle_base:
         russes = [tp.email for tp in TutorProfile.objects.filter(
                 rus__year__exact=YEAR,
-                rus__rusclass__in=handle_base[address])]
+                rus__rusclass__in=handle_base[handle])]
         tutors = [tp.email for tp in TutorProfile.objects.filter(
                 tutor__year__exact=YEAR,
-                tutor__rusclass__in=handle_base[address])]
+                tutor__rusclass__in=handle_base[handle])]
     else:
         return False
 
