@@ -1,3 +1,4 @@
+# vim:set fileencoding=utf8:
 import logging
 from lamson.routing import route, route_like, stateless
 from config.settings import relay
@@ -7,6 +8,13 @@ from lamson import view, mail
 from mftutor.tutor.models import Tutor, TutorGroup, RusClass
 from mftutor.aliases.models import *
 from mftutor.settings import YEAR, RUSCLASS_BASE, TUTORS_PREFIX
+
+try:
+    from mftutor.settings import TUTORMAIL_YEAR, RUSMAIL_YEAR, GF_GROUPS
+except ImportError:
+    logging.error("Could not import TUTORMAIL_YEAR and/or RUSMAIL_YEAR and/or GF_GROUPS")
+    TUTORMAIL_YEAR = RUSMAIL_YEAR = YEAR
+    GF_GROUPS = ('best', 'koor')
 
 @route("(address)@(host)", address=".+")
 @stateless
@@ -24,9 +32,24 @@ def RELAY(message, **kwargs):
 def tutor_group_mails(tutorgroupname):
     """Given a group name, return email addresses of all people in the
     group."""
+
+    year = TUTORMAIL_YEAR
+
+    # In the time between a new board is elected (GF in November) and new tutor
+    # groups are formed (1. stormøde in February), the 'best' alias should
+    # change, but other tutor group aliases should remain the same.
+    # In addition, 'gbest' should always point to 'best' one year back.
+    if tutorgroupname in GF_GROUPS:
+        year = YEAR
+    elif tutorgroupname.startswith('g') and tutorgroupname[1:] in GF_GROUPS:
+        year = YEAR - 1
+        tutorgroupname = tutorgroupname[1:]
+
     groups = resolve_alias(tutorgroupname)
     logging.debug("Resolved group "+tutorgroupname+" to: "+str(tuple(groups)))
-    recipients = Tutor.members.filter(
+
+    recipients = Tutor.objects.filter(
+            year=year, early_termination__isnull=True,
             groups__in=tuple(groups))
     emails = [t.profile.email for t in recipients]
     return emails
@@ -49,7 +72,7 @@ def relay_rusclass(message, address, host):
     for official, handle, internal in RUSCLASS_BASE:
         handle_base[handle] = []
     handles = {}
-    for rusclass in RusClass.objects.filter(year__exact=YEAR):
+    for rusclass in RusClass.objects.filter(year__exact=RUSMAIL_YEAR):
         handles[rusclass.handle] = rusclass
         for h in handle_base.keys():
             if rusclass.handle.startswith(h):
@@ -68,16 +91,17 @@ def relay_rusclass(message, address, host):
 
     if handle in handles:
         russes = [rus.profile.email for rus in Rus.objects.filter(
-                year__exact=YEAR,
+                year__exact=RUSMAIL_YEAR,
                 rusclass__handle__exact=handle)]
         tutors = [tutor.profile.email for tutor in Tutor.members.filter(
+                year__exact=RUSMAIL_YEAR,
                 rusclass__handle__exact=handle)]
     elif handle in handle_base:
         russes = [rus.profile.email for rus in Rus.objects.filter(
-                year__exact=YEAR,
+                year__exact=RUSMAIL_YEAR,
                 rusclass__in=handle_base[handle])]
         tutors = [tutor.profile.email for tutor in Tutor.members.filter(
-                year__exact=YEAR,
+                year__exact=RUSMAIL_YEAR,
                 rusclass__in=handle_base[handle])]
     else:
         return False
