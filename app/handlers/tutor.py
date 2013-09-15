@@ -5,7 +5,7 @@ from config.settings import relay
 from config import settings
 from lamson import view, mail
 
-from mftutor.tutor.models import Tutor, TutorGroup, RusClass
+from mftutor.tutor.models import Tutor, TutorGroup, RusClass, Rus, TutorProfile
 from mftutor.aliases.models import *
 from mftutor.settings import YEAR, RUSCLASS_BASE, TUTORS_PREFIX
 
