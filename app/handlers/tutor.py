@@ -63,7 +63,6 @@ def relay_tutorgroup(message, address, host):
     logging.info("Message from "+message['from']+" to \""+address+"\" ("+str(len(emails))+" recipients): \""+message['subject']+"\"")
     if not emails:
         return False
-    logging.debug("Message: "+unicode(message))
     relay.deliver(message, To=emails)
     return True
 
