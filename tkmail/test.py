@@ -120,7 +120,7 @@ def main():
         else:
             logging.info("Test %s succeeded" % i)
 
-    sys.exit()
+    logging.info("tkmail.test finished; you may Ctrl-C")
 
 
 if __name__ == "__main__":
