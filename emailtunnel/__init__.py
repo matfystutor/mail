@@ -1,12 +1,16 @@
 import json
 import logging
-import smtplib
 import datetime
 
 import email
-# import email.message
+import email.message
+import email.mime.multipart
 # from email.mime.base import MIMEBase
+import email.charset
+from email.charset import QP
+
 import smtpd
+import smtplib
 
 
 class InvalidRecipient(Exception):
@@ -14,22 +18,25 @@ class InvalidRecipient(Exception):
 
 
 class Message(object):
-    def __init__(self, message):
+    def __init__(self, message=None):
         # assert isinstance(message, str)
-        self.message = email.message_from_string(message)
+        if message:
+            self.message = email.message_from_string(message)
 
-        if message.rstrip('\n') == str(self).rstrip('\n'):
-            logging.debug('Data is sane')
+            if message.rstrip('\n') == str(self).rstrip('\n'):
+                logging.debug('Data is sane')
+            else:
+                logging.debug('Data is not sane')
+                logging.debug(repr(message))
+                logging.debug(repr(str(self)))
         else:
-            logging.debug('Data is not sane')
-            logging.debug(repr(message))
-            logging.debug(repr(str(self)))
+            self.message = email.mime.multipart.MIMEMultipart()
 
     def __str__(self):
         return str(self.message)
 
     def add_header(self, key, value):
-        pass
+        self.message.add_header(key, value)
 
     def get_unique_header(self, key):
         values = self.message.get_all(key)
@@ -45,6 +52,20 @@ class Message(object):
             self.message.replace_header(key, value)
         except KeyError:
             self.message.add_header(key, value)
+
+    def set_body_text(self, body, encoding):
+        body_part = email.message.MIMEPart()
+        if encoding:
+            encoded = body.encode(encoding)
+            body_part.set_payload(encoded)
+            body_part.add_header(
+                'Content-Type', 'text/plain')
+            email.charset.add_charset(encoding, QP, QP)
+            body_part.set_charset(encoding)
+        else:
+            body_part.set_payload(body)
+            body_part.add_header('Content-Type', 'text/plain')
+        self.message.set_payload(body_part)
 
     @property
     def subject(self):
