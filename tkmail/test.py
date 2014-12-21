@@ -1,6 +1,7 @@
 import sys
 import time
 import logging
+import smtplib
 import asyncore
 import threading
 
@@ -8,13 +9,19 @@ from emailtunnel import SMTPReceiver, Envelope, Message
 from tkmail.server import TKForwarder
 import emailtunnel.send
 
+
 envelopes = []
+
 
 def deliver_local(message, recipients, sender):
     logging.info("deliver_local: From: %r To: %r Subject: %r"
         % (sender, recipients, message.subject))
+    for recipient in recipients:
+        if '@' not in recipient:
+            raise smtplib.SMTPDataError(0, 'No @ in %r' % recipient)
     envelope = Envelope(message, sender, recipients)
     envelopes.append(envelope)
+
 
 class DumpReceiver(SMTPReceiver):
     def handle_envelope(self, envelope):
