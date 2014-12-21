@@ -53,7 +53,7 @@ def get_parser():
     )
     parser.add_argument(
         '--header', '-I',
-        nargs=2,
+        nargs=2, action='append',
         help='Arbitrary header in message',
     )
     parser.add_argument(
@@ -65,6 +65,8 @@ def get_parser():
 
 
 def main(*args, **kwargs):
+    body = kwargs.pop('body', None)
+
     input_arguments = list(args)
     for key, value in kwargs.items():
         input_arguments += ['--%s' % key, value]
@@ -76,7 +78,8 @@ def main(*args, **kwargs):
     relay_host = smtplib.SMTP(args.relay[0], args.relay[1])
     relay_host.set_debuglevel(0)
 
-    body = sys.stdin.read()
+    if body is None:
+        body = sys.stdin.read()
     # print(repr(body))
     message = email.mime.multipart.MIMEMultipart()
     for to in args.to or []:

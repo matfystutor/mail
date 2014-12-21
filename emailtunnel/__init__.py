@@ -162,10 +162,11 @@ class SMTPForwarder(SMTPReceiver, RelayMixin):
                     invalid.append(e.args[0])
                 else:
                     invalid.append(e)
-            if isinstance(translated, str):
-                raise ValueError('translate_recipient must return a list, '
-                                 'not a string')
-            recipients += list(translated)
+            else:
+                if isinstance(translated, str):
+                    raise ValueError('translate_recipient must return a list, '
+                                     'not a string')
+                recipients += list(translated)
         if invalid:
             raise InvalidRecipient(invalid)
         return recipients
