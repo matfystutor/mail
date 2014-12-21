@@ -38,6 +38,9 @@ class Message(object):
     def add_header(self, key, value):
         self.message.add_header(key, value)
 
+    def get_header(self, key, default=None):
+        return self.message.get(key, default)
+
     def get_unique_header(self, key):
         values = self.message.get_all(key)
         if len(values) > 1:
@@ -74,6 +77,18 @@ class Message(object):
     @subject.setter
     def subject(self, s):
         self.set_unique_header('Subject', s)
+
+    @classmethod
+    def compose(cls, from_, to, subject, body):
+        message = cls()
+        message.add_header('From', from_)
+        message.add_header('To', to)
+        message.subject = subject
+        message.add_header(
+            'Date',
+            datetime.datetime.utcnow().strftime("%a, %d %b %Y %T +0000"))
+        message.set_body_text(body, 'utf-8')
+        return message
 
 
 class Envelope(object):

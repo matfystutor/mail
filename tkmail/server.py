@@ -1,4 +1,5 @@
 import os
+import sys
 import json
 import logging
 import datetime
@@ -34,23 +35,22 @@ class TKForwarder(SMTPForwarder):
         return tkmail.address.translate_recipient(self.year, name)
 
     def handle_invalid_recipient(self, envelope, exn):
-        self.store_failed_envelope(envelope, str(exn))
+        self.store_failed_envelope(
+            envelope, str(exn), 'Invalid recipient: %s' % exn)
 
     def handle_error(self, envelope):
+        exc_type, exc_value, tb = sys.exc_info()
         tb = ''.join(traceback.format_exc())
-        self.store_failed_envelope(envelope, str(tb))
+        self.store_failed_envelope(
+            envelope, str(tb),
+            '%s: %s' % (type(exc_value).__name__, exc_value))
 
         admin_emails = tkmail.address.get_admin_emails()
+        # admin_emails = ['mathiasrav@gmail.com']
 
         sender = recipient = 'admin@TAAGEKAMMERET.dk'
 
-        admin_message = Message()
-        admin_message.add_header('From', sender)
-        admin_message.add_header('To', recipient)
-        admin_message.subject = '[TK-mail] Unhandled exception in processing'
-        admin_message.add_header(
-            'Date', datetime.datetime.utcnow().strftime("%a, %d %b %Y %T +0000"))
-        admin_message.add_header('Auto-Submitted', 'auto-replied')
+        subject = '[TK-mail] Unhandled exception in processing'
         body = textwrap.dedent("""
         This is the mail system of TAAGEKAMMERET.
 
@@ -66,9 +66,13 @@ class TKForwarder(SMTPForwarder):
         """).format(traceback=tb, mailfrom=envelope.mailfrom,
                     rcpttos=envelope.rcpttos, message=envelope.message)
 
+        admin_message = Message.compose(
+            sender, recipient, subject, body)
+        admin_message.add_header('Auto-Submitted', 'auto-replied')
+
         self.deliver(admin_message, admin_emails, sender)
 
-    def store_failed_envelope(self, envelope, description):
+    def store_failed_envelope(self, envelope, description, summary):
         now = now_string()
 
         try:
@@ -83,6 +87,9 @@ class TKForwarder(SMTPForwarder):
             metadata = {
                 'mailfrom': envelope.mailfrom,
                 'rcpttos': envelope.rcpttos,
+                'subject': envelope.message.subject,
+                'date': envelope.message.get_header('Date'),
+                'summary': summary,
             }
             json.dump(metadata, fp)
 

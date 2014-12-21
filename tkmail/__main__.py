@@ -22,6 +22,8 @@ def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument('-p', '--port', type=int, default=25,
                         help='Relay port')
+    parser.add_argument('-P', '--listen-port', type=int, default=9000,
+                        help='Listen port')
     parser.add_argument('-y', '--gf', type=int, default=2014,
                         help='GF year')
     return parser
@@ -33,7 +35,7 @@ def main():
     args = parser.parse_args()
 
     receiver_host = '0.0.0.0'
-    receiver_port = 9000
+    receiver_port = args.listen_port
     relay_host = '127.0.0.1'
     relay_port = args.port
 
