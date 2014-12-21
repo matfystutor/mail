@@ -3,6 +3,24 @@ import logging
 
 from emailtunnel import InvalidRecipient
 from tkmail.database import Database
+from tkmail.config import ADMINS
+
+
+def get_admin_emails():
+    email_addresses = []
+    try:
+        db = Database()
+        email_addresses = [
+            addy.replace('&#064;', '@')
+            for addy in db.get_admin_emails()
+        ]
+    except:
+        pass
+
+    if not email_addresses:
+        email_addresses = list(ADMINS)
+
+    return email_addresses
 
 
 def translate_recipient(year, name):
