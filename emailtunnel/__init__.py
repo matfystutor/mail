@@ -190,6 +190,9 @@ class SMTPForwarder(SMTPReceiver, RelayMixin):
         """
         raise NotImplementedError()
 
+    def handle_invalid_recipient(self, envelope, exn):
+        pass
+
     def handle_envelope(self, envelope):
         subject = envelope.message.subject
 
@@ -205,6 +208,8 @@ class SMTPForwarder(SMTPReceiver, RelayMixin):
             recipients = self.translate_recipients(envelope.rcpttos)
         except InvalidRecipient as e:
             logging.error(repr(e))
+
+            self.handle_invalid_recipient(envelope, e)
 
             # 550 is not valid after DATA according to
             # http://www.greenend.org.uk/rjk/tech/smtpreplies.html
