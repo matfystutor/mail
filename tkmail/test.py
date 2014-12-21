@@ -41,8 +41,6 @@ class RecipientTest(object):
             message = envelope.message
             if envelope.mailfrom != 'recipient_test@localhost':
                 raise AssertionError('Bad sender %r' % envelope.mailfrom)
-            if '%s_%s' % (id(self), i) not in message.subject:
-                raise AssertionError('Bad subject %r' % message.subject)
             recipients += envelope.rcpttos
         self.check_recipients(recipients)
 
@@ -53,7 +51,9 @@ class SameRecipientTest(RecipientTest):
 
     def check_recipients(self, recipients):
         if len(recipients) != len(self._recipients):
-            raise AssertionError("Bad recipient count")
+            raise AssertionError(
+                "Bad recipient count: %r vs %r" %
+                (recipients, self._recipients))
         if any(x != recipients[0] for x in recipients):
             raise AssertionError("Recipients not the same: %r" % recipients)
 
@@ -87,7 +87,7 @@ def main():
         MultipleRecipientTest('BEST'),
         MultipleRecipientTest('BESTFU'),
         MultipleRecipientTest('FU'),
-        MultipleRecipientTest('admin'),
+        MultipleRecipientTest('ADMIN'),
         MultipleRecipientTest('engineering'),
         MultipleRecipientTest('revy+revyteknik'),
         MultipleRecipientTest('tke'),
@@ -115,8 +115,8 @@ def main():
     for i, test in enumerate(tests):
         try:
             test.check_envelopes(test_envelopes[test.get_test_id()])
-        except AssertionError:
-            logging.error("Test %s failed" % i)
+        except AssertionError as e:
+            logging.error("Test %s failed: %s" % (i, e))
         else:
             logging.info("Test %s succeeded" % i)
 
