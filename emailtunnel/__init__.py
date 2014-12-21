@@ -1,22 +1,16 @@
-import sys
 import json
 import logging
 import smtplib
-import argparse
-import asyncore
 import datetime
-import threading
-import traceback
 
 import email
-import email.message
-from email.mime.base import MIMEBase
+# import email.message
+# from email.mime.base import MIMEBase
 import smtpd
 
 
-def now_string():
-    """Return the current date and time as a string."""
-    return datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S.%f")
+class InvalidRecipient(Exception):
+    pass
 
 
 class Message(object):
@@ -25,11 +19,11 @@ class Message(object):
         self.message = email.message_from_string(message)
 
         if message.rstrip('\n') == str(self).rstrip('\n'):
-            logging.debug("%s Data is sane" % self.port)
+            logging.debug('Data is sane')
         else:
-            logging.debug("%s Data is not sane" % self.port)
-            print(repr(message))
-            print(repr(str(self)))
+            logging.debug('Data is not sane')
+            logging.debug(repr(message))
+            logging.debug(repr(str(self)))
 
     def __str__(self):
         return str(self.message)
@@ -38,10 +32,19 @@ class Message(object):
         pass
 
     def get_unique_header(self, key):
-        pass
+        values = self.message.get_all(key)
+        if len(values) > 1:
+            raise ValueError('Header %r occurs %s times' % (key, len(values)))
+        elif len(values) == 0:
+            raise KeyError('header %r' % key)
+        else:
+            return values[0]
 
     def set_unique_header(self, key, value):
-        pass
+        try:
+            self.message.replace_header(key, value)
+        except KeyError:
+            self.message.add_header(key, value)
 
     @property
     def subject(self):
@@ -69,6 +72,7 @@ class SMTPReceiver(smtpd.SMTPServer):
     def __init__(self, host, port):
         self.host = host
         self.port = port
+        logging.debug('Initialize SMTPReceiver on %s:%s' % (host, port))
         super(SMTPReceiver, self).__init__((self.host, self.port), None)
 
     def process_message(self, peer, mailfrom, rcpttos, data):
@@ -82,12 +86,13 @@ class SMTPReceiver(smtpd.SMTPServer):
 
         message = Message(data)
         envelope = Envelope(message, mailfrom, rcpttos)
-        logging.debug(
-            "Message received from Peer: %r, From: %r, to To %r."
-            % (peer, mailfrom, rcpttos))
+        logging.debug("Message received from peer %r" % (peer,))
+        logging.info("From: %r To: %r Subject: %r"
+            % (mailfrom, rcpttos, message.subject))
         try:
             return self.handle_envelope(envelope)
         except:
+            logging.exception("Could not handle envelope!")
             try:
                 self.handle_error(envelope)
             except:
@@ -100,7 +105,7 @@ class SMTPReceiver(smtpd.SMTPServer):
         raise NotImplementedError()
 
     def handle_error(self, envelope):
-        logging.exception("Could not handle envelope!")
+        pass
 
 
 class LoggingReceiver(SMTPReceiver):
@@ -123,10 +128,15 @@ class RelayMixin(object):
 
     def deliver(self, message, recipients, sender):
         relay_host = self.configure_relay()
+        logging.info('From: %r To: %r Subject: %r'
+                     % (sender, recipients, message.subject))
         try:
             relay_host.sendmail(sender, recipients, str(message))
         finally:
-            relay_host.quit()
+            try:
+                relay_host.quit()
+            except smtplib.SMTPServerDisconnected:
+                pass
 
 
 class SMTPForwarder(SMTPReceiver, RelayMixin):
@@ -142,9 +152,23 @@ class SMTPForwarder(SMTPReceiver, RelayMixin):
         By default, processes each recipient using translate_recipient.
         """
 
-        return [recipient
-                for rcptto in rcpttos
-                for recipient in self.translate_recipient(rcptto)]
+        invalid = []
+        recipients = []
+        for rcptto in rcpttos:
+            try:
+                translated = self.translate_recipient(rcptto)
+            except InvalidRecipient as e:
+                if len(e.args) == 1:
+                    invalid.append(e.args[0])
+                else:
+                    invalid.append(e)
+            if isinstance(translated, str):
+                raise ValueError('translate_recipient must return a list, '
+                                 'not a string')
+            recipients += list(translated)
+        if invalid:
+            raise InvalidRecipient(invalid)
+        return recipients
 
     def translate_recipient(self, rcptto):
         """Should be overridden in subclasses.
@@ -155,76 +179,27 @@ class SMTPForwarder(SMTPReceiver, RelayMixin):
 
         return [rcptto]
 
+    def translate_subject(self, subject):
+        """Implement to translate the subject to something else."""
+        raise NotImplementedError()
+
     def handle_envelope(self, envelope):
-        recipients = self.translate_recipients(envelope.rcpttos)
+        subject = envelope.message.subject
+
+        try:
+            new_subject = self.translate_subject(subject)
+        except NotImplementedError:
+            pass
+        else:
+            envelope.message.subject = new_subject
+
+        try:
+            recipients = self.translate_recipients(envelope.rcpttos)
+        except InvalidRecipient as e:
+            logging.error(repr(e))
+
+            # 550 is not valid after DATA according to
+            # http://www.greenend.org.uk/rjk/tech/smtpreplies.html
+            return '554 Transaction failed: mailbox unavailable'
+
         self.deliver(envelope.message, recipients, envelope.mailfrom)
-
-    def handle_error(self, envelope):
-        tb = ''.join(traceback.format_exc())
-        now = now_string()
-
-        with open('error/%s.mail' % now, 'w') as fp:
-            fp.write(str(envelope.message))
-
-        with open('error/%s.json' % now, 'w') as fp:
-            metadata = {
-                'mailfrom': envelope.mailfrom,
-                'rcpttos': envelope.rcpttos,
-            }
-            json.dump(metadata, fp)
-
-        with open('error/%s.txt' % now, 'w') as fp:
-            fp.write('From %s\n' % envelope.mailfrom)
-            fp.write('To %s\n\n' % envelope.rcpttos)
-            fp.write('%s\n' % tb)
-            fp.write(str(envelope.message))
-
-
-def validate_address(v):
-    host, port = v.split(':')
-    port = int(port)
-    return host, port
-
-
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        '--listen',
-        type=validate_address,
-        default=('0.0.0.0', 9000),
-        help='hostname and port to listen on (default 0.0.0.0:9000)',
-    )
-    parser.add_argument(
-        '--relay',
-        type=validate_address,
-        default=('127.0.0.1', 25),
-        help='hostname and port to relay to (default 127.0.0.1:25)',
-    )
-    parser.add_argument(
-        '--log',
-        action='store_true',
-        help='instead of relaying email, log all received',
-    )
-    args = parser.parse_args()
-    if not args.log and not args.relay:
-        parser.error("Must specify either --relay or --log")
-
-    receiver_host, receiver_port = args.listen
-
-    if args.log:
-        server = LoggingReceiver(receiver_host, receiver_port)
-
-    else:
-        relay_host, relay_port = args.relay
-        server = SMTPForwarder(
-            receiver_host, receiver_port,
-            relay_host, relay_port)
-
-    poller = threading.Thread(
-        target=asyncore.loop,
-        kwargs={'timeout': 0.1, 'use_poll': True})
-    poller.start()
-
-
-if __name__ == "__main__":
-    main()

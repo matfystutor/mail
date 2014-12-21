@@ -13,7 +13,7 @@ def validate_address(v):
     return host, port
 
 
-def main():
+def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '--relay',
@@ -61,13 +61,23 @@ def main():
         help='Encode the message and set Content-type header',
     )
 
-    args = parser.parse_args()
+    return parser
+
+
+def main(*args, **kwargs):
+    input_arguments = list(args)
+    for key, value in kwargs.items():
+        input_arguments += ['--%s' % key, value]
+
+    parser = get_parser()
+
+    args = parser.parse_args(input_arguments)
 
     relay_host = smtplib.SMTP(args.relay[0], args.relay[1])
     relay_host.set_debuglevel(0)
 
     body = sys.stdin.read()
-    print(repr(body))
+    # print(repr(body))
     message = email.mime.multipart.MIMEMultipart()
     for to in args.to or []:
         message.add_header('To', to)
@@ -104,10 +114,18 @@ def main():
         print('')
         raise
 
-    relay_host.sendmail(
-        args.sender, args.recipient, str(message))
-    relay_host.quit()
+    try:
+        relay_host.sendmail(
+            args.sender, args.recipient, str(message))
+    except smtplib.SMTPDataError as e:
+        print('Relay returned error on DATA:')
+        print(str(e))
+    finally:
+        try:
+            relay_host.quit()
+        except smtplib.SMTPServerDisconnected:
+            pass
 
 
 if __name__ == "__main__":
-    main()
+    main(*sys.argv[1:])
