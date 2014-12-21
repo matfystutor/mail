@@ -37,7 +37,7 @@ def parse_recipient(recipient, db, currentYear):
     invalid_recipients = []
     for sign, name in re.findall(r'([+-]?)([^+-]+)', recipient):
         try:
-            personIds = parse_alias(name, db)
+            personIds = parse_alias(name, db, currentYear)
             personIdOps.append((sign or '+', personIds))
         except InvalidRecipient as e:
             invalid_recipients.append(e.args[0])
@@ -76,7 +76,7 @@ def parse_alias(alias, db, currentYear):
                         % (anciprefix, groupRegexp, ancipostfix))
             else:
                 regexp = '^(?P<name>%s)$' % groupRegexp
-            result = re.match(regexp, alias)
+            result = re.match(regexp, alias, re.I)
             if result:
                 matches.append((groupId, groupType, result))
 
