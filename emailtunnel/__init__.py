@@ -179,19 +179,26 @@ class SMTPForwarder(SMTPReceiver, RelayMixin):
 
         return [rcptto]
 
-    def translate_subject(self, subject):
-        """Implement to translate the subject to something else."""
+    def translate_subject(self, envelope):
+        """Implement to translate the subject to something else.
+
+        If None is returned, or NotImplementedError is raised,
+        the subject is not changed.
+        Otherwise, the subject of the message in the given envelope
+        is changed to the returned value before being forwarded.
+        """
         raise NotImplementedError()
 
     def handle_envelope(self, envelope):
         subject = envelope.message.subject
 
         try:
-            new_subject = self.translate_subject(subject)
+            new_subject = self.translate_subject(envelope)
         except NotImplementedError:
             pass
         else:
-            envelope.message.subject = new_subject
+            if new_subject is not None:
+                envelope.message.subject = new_subject
 
         try:
             recipients = self.translate_recipients(envelope.rcpttos)

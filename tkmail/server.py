@@ -15,7 +15,12 @@ def now_string():
 
 
 class TKForwarder(SMTPForwarder):
-    def translate_subject(self, subject):
+    def __init__(self, *args, **kwargs):
+        self.year = kwargs.pop('year')
+        super(TKForwarder, self).__init__(*args, **kwargs)
+
+    def translate_subject(self, envelope):
+        subject = envelope.message.subject
         if '[TK' in subject:
             return subject
         else:
@@ -23,7 +28,7 @@ class TKForwarder(SMTPForwarder):
 
     def translate_recipient(self, rcptto):
         name, domain = rcptto.split('@')
-        return tkmail.address.translate_recipient(name)
+        return tkmail.address.translate_recipient(self.year, name)
 
     def handle_error(self, envelope):
         tb = ''.join(traceback.format_exc())
