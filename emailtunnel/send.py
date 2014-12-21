@@ -1,11 +1,9 @@
 import sys
 import argparse
-import email
-import email.mime.multipart
-import email.charset
-from email.charset import QP
-
 import smtplib
+import email.message
+
+from emailtunnel import Message
 
 def validate_address(v):
     host, port = v.split(':')
@@ -80,8 +78,8 @@ def main(*args, **kwargs):
 
     if body is None:
         body = sys.stdin.read()
-    # print(repr(body))
-    message = email.mime.multipart.MIMEMultipart()
+
+    message = Message()
     for to in args.to or []:
         message.add_header('To', to)
     for cc in args.cc or []:
@@ -89,29 +87,18 @@ def main(*args, **kwargs):
     if args.from_:
         message.add_header('From', args.from_)
 
-    message.add_header('Subject', args.subject)
+    message.subject = args.subject
 
     for key, value in args.header or []:
         message.add_header(key, value)
 
-    body_part = email.message.MIMEPart()
-    if args.encoding:
-        encoded = body.encode(args.encoding)
-        body_part.set_payload(encoded)
-        body_part.add_header(
-            'Content-Type', 'text/plain')
-        email.charset.add_charset(args.encoding, QP, QP)
-        body_part.set_charset(args.encoding)
-    else:
-        body_part.set_payload(body)
-        body_part.add_header('Content-Type', 'text/plain')
-    message.attach(body_part)
+    message.set_body_text(body, args.encoding)
 
     from email.generator import Generator
     policy = email.message.compat32
     g = Generator(sys.stdout, maxheaderlen=80, policy=policy, mangle_from_=False)
     try:
-        g.flatten(message, unixfrom=False)
+        g.flatten(message.message, unixfrom=False)
     except:
         sys.stdout.flush()
         print('')
