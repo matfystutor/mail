@@ -146,14 +146,25 @@ def getGrad(preFix, postFix, currentYear):
     else:
         if len(postFix) == 4:
             first, second = int(postFix[0:2]), int(postFix[2:4])
-            if (first + 1) % 100 != second:
-                #There should be exactly one year between the two numbers
+            if (first + 1) % 100 == second:
+                # There should be exactly one year between the two numbers
+                if first > 56:
+                    grad = currentYear - (1900 + first)
+                else:
+                    grad = currentYear - (2000 + first)
+            elif first in (19, 20):
+                # 19xx or 20xx
+                grad = currentYear - int(postFix)
+            else:
                 raise InvalidRecipient(postFix)
-        year = int(postFix[0:2])
-        if year > 56: ##19??
-            grad = currentYear - (1900 + year)
-        else: ##20??
-            grad = currentYear - (2000 + year)
+        elif len(postFix) == 2:
+            year = int(postFix[0:2])
+            if year > 56: ##19??
+                grad = currentYear - (1900 + year)
+            else: ##20??
+                grad = currentYear - (2000 + year)
+        else:
+            raise InvalidRecipient(postFix)
 
     ##Now evaluate the prefix:
     regexpRaised = re.compile(r"([KGBOT])([0-9]+)", re.I)
