@@ -130,9 +130,8 @@ def parse_alias(alias, db, currentYear):
 
         return personIds
 
-    except DatabaseError as e:
-        logging.error("TKMail.py:Evalalias(): %s" % e.msg)
-        raise
+    finally:
+        pass
 
 
 def getGrad(preFix, postFix, currentYear):

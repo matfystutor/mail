@@ -12,12 +12,6 @@ class Error(Exception):
         self.msg = msg
 
 
-class DatabaseError(Error):
-    def __init__(self, mdbError):
-        super(DatabaseError, self).__init__('Error %d: %s'
-                % (mdbError.args[0], mdbError.args[1]))
-
-
 class Database(object):
     tkfolk_schema = """
         id      int(11)      NO   None  primary, auto_increment
@@ -38,14 +32,11 @@ class Database(object):
         """
 
     def __init__(self):
-        try:
-            if HOSTNAME != '127.0.0.1':
-                raise ValueError('Non-local hostname not supported by ' +
-                                 'mysql.connector')
-            self._mysql = mysql.connector.Connect(
-                user=USERNAME, password=PASSWORD, database=DATABASE)
-        except mdb.Error as e:
-            raise DatabaseError(e)
+        if HOSTNAME not in ('127.0.0.1', 'localhost'):
+            raise ValueError('Non-local hostname not supported by ' +
+                             'mysql.connector')
+        self._mysql = mysql.connector.Connect(
+            user=USERNAME, password=PASSWORD, database=DATABASE)
 
         self._cursor = self._mysql.cursor()
 
@@ -54,10 +45,8 @@ class Database(object):
             sql = statement % args
         else:
             sql = statement
-        try:
-            self._cursor.execute(sql)
-        except mdb.Error as e:
-            raise DatabaseError(e)
+
+        self._cursor.execute(sql)
 
     def _fetchall(self, *args, **kwargs):
         column = kwargs.pop('column', None)
