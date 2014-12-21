@@ -30,8 +30,14 @@ class TKForwarder(SMTPForwarder):
         name, domain = rcptto.split('@')
         return tkmail.address.translate_recipient(self.year, name)
 
+    def handle_invalid_recipient(self, envelope, exn):
+        self.store_failed_envelope(envelope, str(exn))
+
     def handle_error(self, envelope):
         tb = ''.join(traceback.format_exc())
+        self.store_failed_envelope(envelope, str(tb))
+
+    def store_failed_envelope(self, envelope, description):
         now = now_string()
 
         try:
@@ -52,5 +58,5 @@ class TKForwarder(SMTPForwarder):
         with open('error/%s.txt' % now, 'w') as fp:
             fp.write('From %s\n' % envelope.mailfrom)
             fp.write('To %s\n\n' % envelope.rcpttos)
-            fp.write('%s\n' % tb)
+            fp.write('%s\n' % description)
             fp.write(str(envelope.message))
