@@ -156,7 +156,7 @@ def getGrad(preFix, postFix, currentYear):
             grad = currentYear - (2000 + year)
 
     ##Now evaluate the prefix:
-    regexpRaised = re.compile(r"([KGBOT])([0-9]+)")
+    regexpRaised = re.compile(r"([KGBOT])([0-9]+)", re.I)
     i = 0
     while i < len(preFix):
         resul = regexpRaised.match(preFix[i:])
