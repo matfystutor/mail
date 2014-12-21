@@ -1,7 +1,8 @@
-__pycache__
 .*.swp
 .swp
-tkmail.log
-/tkmail.log
+__pycache__
 /error
-/tkmail/config
+/errorarchive
+/monitor.log
+/tkmail.log
+/tkmail/config.py
