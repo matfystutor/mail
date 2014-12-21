@@ -6,15 +6,15 @@ from tkmail.database import Database
 
 
 def translate_recipient(year, name):
-    if name.upper() in ('GFORM', 'FORM13', 'FORM2013', 'FORM1314'):
-        return ['mathiasrav@gmail.com']
-    else:
-        raise InvalidRecipient(name)
+    # if name.upper() in ('GFORM', 'FORM13', 'FORM2013', 'FORM1314'):
+    #     return ['mathiasrav@gmail.com']
+    # else:
+    #     raise InvalidRecipient(name)
 
-    # db = Database()
-    # recipient_ids = parse_recipient(name, db, year)
-    # email_addresses = db.get_email_addresses(setOfEmails)
-    # return email_addresses
+    db = Database()
+    recipient_ids = parse_recipient(name, db, year)
+    email_addresses = db.get_email_addresses(recipient_ids)
+    return email_addresses
 
 
 prefixValues = {
