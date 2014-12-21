@@ -22,8 +22,15 @@ def now_string():
 
 class Message(object):
     def __init__(self, message):
-        assert isinstance(message, email.message.Message)
-        self.message = message
+        # assert isinstance(message, str)
+        self.message = email.message_from_string(message)
+
+        if message.rstrip('\n') == str(self).rstrip('\n'):
+            logging.debug("%s Data is sane" % self.port)
+        else:
+            logging.debug("%s Data is not sane" % self.port)
+            print(repr(message))
+            print(repr(str(self)))
 
     def __str__(self):
         return str(self.message)
@@ -48,6 +55,11 @@ class Message(object):
 
 class Envelope(object):
     def __init__(self, message, mailfrom, rcpttos):
+        """See also SMTPReceiver.process_message.
+
+        mailfrom is a string; rcpttos is a list of recipients.
+        """
+
         assert isinstance(message, Message)
         self.message = message
         self.mailfrom = mailfrom
@@ -60,14 +72,16 @@ class SMTPReceiver(smtpd.SMTPServer):
         self.port = port
         super(SMTPReceiver, self).__init__((self.host, self.port), None)
 
-    def process_message(self, peer, mailfrom, rcpttos, Data):
-        message = Message(email.message_from_string(Data))
-        if Data.rstrip('\n') == str(message.message).rstrip('\n'):
-            logging.debug("%s Data is sane" % self.port)
-        else:
-            logging.debug("%s Data is not sane" % self.port)
-            print(repr(Data))
-            print(repr(str(message.message)))
+    def process_message(self, peer, mailfrom, rcpttos, data):
+        """Implementation of SMTPReceiver.process_message.
+
+        peer is a tuple of (ipaddr, port).
+        mailfrom is the raw sender address.
+        rcpttos is a list of raw recipient addresses.
+        data is the full text of the message.
+        """
+
+        message = Message(data)
         envelope = Envelope(message, mailfrom, rcpttos)
         logging.debug(
             "Message received from Peer: %r, From: %r, to To %r."
@@ -108,10 +122,10 @@ class RelayMixin(object):
         # relay_host.login(self.username, self.password)
         return relay_host
 
-    def deliver(self, message, recipient, sender):
+    def deliver(self, message, recipients, sender):
         relay_host = self.configure_relay()
         try:
-            relay_host.sendmail(sender, recipient, str(message))
+            relay_host.sendmail(sender, recipients, str(message))
         finally:
             relay_host.quit()
 
@@ -122,8 +136,29 @@ class SMTPForwarder(SMTPReceiver, RelayMixin):
         self.relay_host = relay_host
         self.relay_port = relay_port
 
+    def translate_recipients(self, rcpttos):
+        """May be overridden in subclasses.
+
+        Given a list of recipients, return a list of target recipients.
+        By default, processes each recipient using translate_recipient.
+        """
+
+        return [recipient
+                for rcptto in rcpttos
+                for recipient in self.translate_recipient(rcptto)]
+
+    def translate_recipient(self, rcptto):
+        """Should be overridden in subclasses.
+
+        Given a single recipient, return a list of target recipients.
+        By default, returns the input recipient.
+        """
+
+        return [rcptto]
+
     def handle_envelope(self, envelope):
-        self.deliver(envelope.message, envelope.rcpttos, envelope.mailfrom)
+        recipients = self.translate_recipients(envelope.rcpttos)
+        self.deliver(envelope.message, recipients, envelope.mailfrom)
 
     def handle_error(self, envelope):
         tb = ''.join(traceback.format_exc())
