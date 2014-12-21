@@ -2,9 +2,10 @@ import os
 import json
 import logging
 import datetime
+import textwrap
 import traceback
 
-from emailtunnel import SMTPForwarder, InvalidRecipient
+from emailtunnel import SMTPForwarder, InvalidRecipient, Message
 
 import tkmail.address
 
@@ -28,6 +29,8 @@ class TKForwarder(SMTPForwarder):
 
     def translate_recipient(self, rcptto):
         name, domain = rcptto.split('@')
+        if name.lower() == 'exceptiontest':
+            raise ValueError("name is %r" % name)
         return tkmail.address.translate_recipient(self.year, name)
 
     def handle_invalid_recipient(self, envelope, exn):
@@ -36,6 +39,34 @@ class TKForwarder(SMTPForwarder):
     def handle_error(self, envelope):
         tb = ''.join(traceback.format_exc())
         self.store_failed_envelope(envelope, str(tb))
+
+        admin_emails = tkmail.address.get_admin_emails()
+
+        sender = recipient = 'admin@TAAGEKAMMERET.dk'
+
+        admin_message = Message()
+        admin_message.add_header('From', sender)
+        admin_message.add_header('To', recipient)
+        admin_message.subject = '[TK-mail] Unhandled exception in processing'
+        admin_message.add_header(
+            'Date', datetime.datetime.utcnow().strftime("%a, %d %b %Y %T +0000"))
+        admin_message.add_header('Auto-Submitted', 'auto-replied')
+        body = textwrap.dedent("""
+        This is the mail system of TAAGEKAMMERET.
+
+        The following exception was raised when processing the message below:
+
+        {traceback}
+
+        Envelope sender: {mailfrom}
+        Envelope recipients: {rcpttos}
+        Envelope message:
+
+        {message}
+        """).format(traceback=tb, mailfrom=envelope.mailfrom,
+                    rcpttos=envelope.rcpttos, message=envelope.message)
+
+        self.deliver(admin_message, admin_emails, sender)
 
     def store_failed_envelope(self, envelope, description):
         now = now_string()
