@@ -6,6 +6,8 @@ import datetime
 import textwrap
 import traceback
 
+import email.header
+
 from emailtunnel import SMTPForwarder, InvalidRecipient, Message
 
 import tkmail.address
@@ -23,10 +25,15 @@ class TKForwarder(SMTPForwarder):
 
     def translate_subject(self, envelope):
         subject = envelope.message.subject
-        if '[TK' in subject:
-            return subject
+        subject_parts = email.header.decode_header(subject)
+        subject_decoded = str(email.header.make_header(subject_parts))
+
+        if '[TK' in subject_decoded:
+            # No change
+            return None
         else:
-            return '[TK] %s' % subject
+            subject_parts = [('[TK] ', None)] + list(subject_parts)
+            return email.header.make_header(subject_parts)
 
     def translate_recipient(self, rcptto):
         name, domain = rcptto.split('@')
