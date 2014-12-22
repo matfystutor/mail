@@ -3,7 +3,7 @@ import sys
 import json
 import time
 import logging
-logging.basicConfig(filename='monitor.log')
+import argparse
 import textwrap
 import smtplib
 
@@ -40,6 +40,15 @@ def archive_report(basename):
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-n', '--dry-run', action='store_true')
+    args = parser.parse_args()
+
+    if args.dry_run:
+        logging.basicConfig(level=logging.INFO)
+    else:
+        logging.basicConfig(filename='monitor.log', level=logging.INFO)
+
     try:
         filenames = os.listdir('error')
     except OSError:
@@ -70,6 +79,11 @@ def main():
         reports.append(report)
 
     age = oldest - now
+
+    if args.dry_run:
+        logging.info('%s report(s) / age %s (limit is %s / %s)' %
+                     (len(reports), age, MAX_SIZE, MAX_DAYS * 24 * 60 * 60))
+        return
 
     if len(files) <= MAX_SIZE and age <= MAX_DAYS * 24 * 60 * 60:
         logging.info('Only %s young reports; exiting' % len(files))
