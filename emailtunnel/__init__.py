@@ -226,6 +226,15 @@ class SMTPForwarder(SMTPReceiver, RelayMixin):
         """
         raise NotImplementedError()
 
+    def get_envelope_mailfrom(self, envelope):
+        """Compute the address to use as MAIL FROM.
+
+        This is the Return-Path to which returned emails are sent.
+        By default, returns the same MAIL FROM as the received envelope,
+        but should be changed.
+        """
+        return envelope.mailfrom
+
     def handle_invalid_recipient(self, envelope, exn):
         pass
 
@@ -251,4 +260,6 @@ class SMTPForwarder(SMTPReceiver, RelayMixin):
             # http://www.greenend.org.uk/rjk/tech/smtpreplies.html
             return '554 Transaction failed: mailbox unavailable'
 
-        self.deliver(envelope.message, recipients, envelope.mailfrom)
+        mailfrom = self.get_envelope_mailfrom(envelope)
+
+        self.deliver(envelope.message, recipients, mailfrom)
