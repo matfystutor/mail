@@ -30,8 +30,6 @@ class TKForwarder(SMTPForwarder):
 
     def translate_recipient(self, rcptto):
         name, domain = rcptto.split('@')
-        if name.lower() == 'exceptiontest':
-            raise ValueError("name is %r" % name)
         return tkmail.address.translate_recipient(self.year, name)
 
     def handle_invalid_recipient(self, envelope, exn):
