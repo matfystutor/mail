@@ -39,6 +39,9 @@ class TKForwarder(SMTPForwarder):
         name, domain = rcptto.split('@')
         return tkmail.address.translate_recipient(self.year, name)
 
+    def get_envelope_mailfrom(self, envelope):
+        return 'admin@TAAGEKAMMERET.dk'
+
     def handle_invalid_recipient(self, envelope, exn):
         self.store_failed_envelope(
             envelope, str(exn), 'Invalid recipient: %s' % exn)
