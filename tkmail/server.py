@@ -43,8 +43,8 @@ class TKForwarder(SMTPForwarder):
             envelope, str(tb),
             '%s: %s' % (type(exc_value).__name__, exc_value))
 
-        admin_emails = tkmail.address.get_admin_emails()
-        # admin_emails = ['mathiasrav@gmail.com']
+        # admin_emails = tkmail.address.get_admin_emails()
+        admin_emails = ['mathiasrav@gmail.com']
 
         sender = recipient = 'admin@TAAGEKAMMERET.dk'
 
