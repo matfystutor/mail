@@ -6,3 +6,4 @@ __pycache__
 /monitor.log
 /tkmail.log
 /tkmail/config.py
+*.pyc
