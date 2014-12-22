@@ -23,12 +23,21 @@ class Message(object):
         if message:
             self.message = email.message_from_string(message)
 
-            if message.rstrip('\n') == str(self).rstrip('\n'):
+            a = message.rstrip('\n')
+            b = str(self).rstrip('\n')
+
+            if a == b:
                 logging.debug('Data is sane')
             else:
-                logging.debug('Data is not sane')
-                logging.debug(repr(message))
-                logging.debug(repr(str(self)))
+                a_lines = tuple(line.rstrip(' ') for line in a.splitlines())
+                b_lines = tuple(line.rstrip(' ') for line in b.splitlines())
+                if a_lines == b_lines:
+                    logging.debug(
+                        'Data is sane after stripping trailing spaces')
+                else:
+                    logging.debug('Data is not sane')
+                    logging.debug(repr(message))
+                    logging.debug(repr(str(self)))
         else:
             self.message = email.mime.multipart.MIMEMultipart()
 
