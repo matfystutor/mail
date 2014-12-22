@@ -48,8 +48,6 @@ class RecipientTest(object):
         recipients = []
         for i, envelope in enumerate(envelopes):
             message = envelope.message
-            if envelope.mailfrom != 'recipient_test@localhost':
-                raise AssertionError('Bad sender %r' % envelope.mailfrom)
             recipients += envelope.rcpttos
         self.check_recipients(recipients)
 
