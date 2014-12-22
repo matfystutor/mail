@@ -95,7 +95,7 @@ class TKForwarder(SMTPForwarder):
             metadata = {
                 'mailfrom': envelope.mailfrom,
                 'rcpttos': envelope.rcpttos,
-                'subject': envelope.message.subject,
+                'subject': str(envelope.message.subject),
                 'date': envelope.message.get_header('Date'),
                 'summary': summary,
             }
