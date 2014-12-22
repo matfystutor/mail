@@ -78,15 +78,15 @@ def main():
 
         reports.append(report)
 
-    age = oldest - now
+    age = now - oldest
 
     if args.dry_run:
         logging.info('%s report(s) / age %s (limit is %s / %s)' %
                      (len(reports), age, MAX_SIZE, MAX_DAYS * 24 * 60 * 60))
         return
 
-    if len(files) <= MAX_SIZE and age <= MAX_DAYS * 24 * 60 * 60:
-        logging.info('Only %s young reports; exiting' % len(files))
+    if len(reports) <= MAX_SIZE and age <= MAX_DAYS * 24 * 60 * 60:
+        logging.info('Only %s young reports; exiting' % len(reports))
         return
 
     admins = tkmail.address.get_admin_emails()
