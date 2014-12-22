@@ -24,7 +24,7 @@ def get_report(basename):
         body = fp.read()
 
     report = dict(metadata)
-    report['mtime'] = mtime
+    report['mtime'] = int(mtime)
     report['body'] = body
     report['basename'] = basename
     return report
