@@ -65,7 +65,7 @@ class Message(object):
         return self.message.get_all(key, [])
 
     def get_unique_header(self, key):
-        values = self.message.get_all(key)
+        values = self.get_all_headers(key)
         if len(values) > 1:
             raise ValueError('Header %r occurs %s times' % (key, len(values)))
         elif len(values) == 0:
