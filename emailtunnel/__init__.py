@@ -122,7 +122,33 @@ class Envelope(object):
         self.rcpttos = rcpttos
 
 
+class ResilientSMTPChannel(smtpd.SMTPChannel):
+    def collect_incoming_data(self, data):
+        try:
+            str_data = str(data, 'utf-8')
+        except UnicodeDecodeError:
+            logging.error('ResilientSMTPChannel.collect_incoming_data: ' +
+                          'UnicodeDecodeError encountered; decoding with ' +
+                          'errors=replace')
+            str_data = data.decode('utf-8', 'replace')
+
+        # str_data.encode('utf-8').decode('utf-8') will surely not raise
+        # a UnicodeDecodeError in SMTPChannel.collect_incoming_data.
+        super(ResilientSMTPChannel, self).collect_incoming_data(
+            str_data.encode('utf-8'))
+
+    def log_info(self, message, type_='info'):
+        try:
+            logger = getattr(logging, type_)
+        except AttributeError:
+            logger = logging.info
+
+        logger(message)
+
+
 class SMTPReceiver(smtpd.SMTPServer):
+    channel_class = ResilientSMTPChannel
+
     def __init__(self, host, port):
         self.host = host
         self.port = port
