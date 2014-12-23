@@ -34,7 +34,7 @@ def main():
     parser = get_parser()
     args = parser.parse_args()
 
-    receiver_host = '0.0.0.0'
+    receiver_host = '127.0.0.1'
     receiver_port = args.listen_port
     relay_host = '127.0.0.1'
     relay_port = args.port
