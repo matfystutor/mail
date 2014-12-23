@@ -305,9 +305,7 @@ class SMTPForwarder(SMTPReceiver, RelayMixin):
 
             self.handle_invalid_recipient(envelope, e)
 
-            # 550 is not valid after DATA according to
-            # http://www.greenend.org.uk/rjk/tech/smtpreplies.html
-            return '554 Transaction failed: mailbox unavailable'
+            return '550 Requested action not taken: mailbox unavailable'
 
         mailfrom = self.get_envelope_mailfrom(envelope)
 
