@@ -57,6 +57,11 @@ class Message(object):
         return self.message.get(key, default)
 
     def get_all_headers(self, key):
+        """Return a list of headers with the given key.
+
+        If no headers are found, the empty list is returned.
+        """
+
         return self.message.get_all(key, [])
 
     def get_unique_header(self, key):
