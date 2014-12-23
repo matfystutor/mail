@@ -158,8 +158,12 @@ class SMTPReceiver(smtpd.SMTPServer):
     def __init__(self, host, port):
         self.host = host
         self.port = port
-        logging.debug('Initialize SMTPReceiver on %s:%s' % (host, port))
         super(SMTPReceiver, self).__init__((self.host, self.port), None)
+        self.startup_log()
+
+    def startup_log(self):
+        logging.debug('Initialize SMTPReceiver on %s:%s'
+                      % (self.host, pself.ort))
 
     def process_message(self, peer, mailfrom, rcpttos, data):
         """Implementation of SMTPReceiver.process_message.
@@ -226,9 +230,9 @@ class RelayMixin(object):
 
 class SMTPForwarder(SMTPReceiver, RelayMixin):
     def __init__(self, receiver_host, receiver_port, relay_host, relay_port):
-        super(SMTPForwarder, self).__init__(receiver_host, receiver_port)
         self.relay_host = relay_host
         self.relay_port = relay_port
+        super(SMTPForwarder, self).__init__(receiver_host, receiver_port)
 
     def translate_recipients(self, rcpttos):
         """May be overridden in subclasses.
