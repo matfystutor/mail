@@ -35,9 +35,15 @@ class Message(object):
                     logging.debug(
                         'Data is sane after stripping trailing spaces')
                 else:
-                    logging.debug('Data is not sane')
-                    logging.debug(repr(message))
-                    logging.debug(repr(str(self)))
+                    amavis_warnings = self.get_all_headers('X-Amavis-Alert')
+                    if amavis_warnings:
+                        logging.debug('Data is not sane; contains X-Amavis-Alert:')
+                        for s in amavis_warnings:
+                            logging.debug(s)
+                    else:
+                        logging.debug('Data is not sane')
+                        logging.debug(repr(message))
+                        logging.debug(repr(str(self)))
         else:
             self.message = email.mime.multipart.MIMEMultipart()
 
@@ -49,6 +55,9 @@ class Message(object):
 
     def get_header(self, key, default=None):
         return self.message.get(key, default)
+
+    def get_all_headers(self, key):
+        return self.message.get_all(key, [])
 
     def get_unique_header(self, key):
         values = self.message.get_all(key)
