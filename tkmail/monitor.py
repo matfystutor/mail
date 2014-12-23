@@ -15,6 +15,20 @@ MAX_SIZE = 10
 MAX_DAYS = 2
 
 
+def configure_logging(use_tty):
+    root = logging.getLogger()
+    if use_tty:
+        handler = logging.StreamHandler(None)
+    else:
+        handler = logging.FileHandler('monitor.log', 'a')
+    fmt = '[%(asctime)s %(levelname)s] %(message)s'
+    datefmt = None
+    formatter = logging.Formatter(fmt, datefmt, '%')
+    handler.setFormatter(formatter)
+    root.addHandler(handler)
+    root.setLevel(logging.DEBUG)
+
+
 def get_report(basename):
     with open('error/%s.json' % basename) as fp:
         metadata = json.load(fp)
@@ -44,10 +58,7 @@ def main():
     parser.add_argument('-n', '--dry-run', action='store_true')
     args = parser.parse_args()
 
-    if args.dry_run:
-        logging.basicConfig(level=logging.INFO)
-    else:
-        logging.basicConfig(filename='monitor.log', level=logging.INFO)
+    configure_logging(args.dry_run)
 
     try:
         filenames = os.listdir('error')
