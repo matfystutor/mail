@@ -32,7 +32,8 @@ class TKForwarder(SMTPForwarder):
             # No change
             return None
         else:
-            subject_parts = [('[TK] ', None)] + list(subject_parts)
+            # No space in '[TK]', since the parts are joined by spaces.
+            subject_parts = [('[TK]', None)] + list(subject_parts)
             return email.header.make_header(subject_parts)
 
     def translate_recipient(self, rcptto):
