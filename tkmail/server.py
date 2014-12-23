@@ -23,6 +23,11 @@ class TKForwarder(SMTPForwarder):
         self.year = kwargs.pop('year')
         super(TKForwarder, self).__init__(*args, **kwargs)
 
+    def startup_log(self):
+        logging.info(
+            'TKForwarder listening on %s:%s, relaying to port %s, GF year %s'
+            % (self.host, self.port, self.relay_port, self.year))
+
     def translate_subject(self, envelope):
         subject = envelope.message.subject
         subject_parts = email.header.decode_header(subject)

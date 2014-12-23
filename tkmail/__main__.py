@@ -42,8 +42,6 @@ def main():
     server = TKForwarder(
         receiver_host, receiver_port, relay_host, relay_port,
         year=args.gf)
-    logging.info('TKForwarder initialized with relay port %s, GF year %s' %
-                 (relay_port, args.gf))
     try:
         asyncore.loop(timeout=0.1, use_poll=True)
     except KeyboardInterrupt:
