@@ -172,9 +172,8 @@ class SMTPReceiver(smtpd.SMTPServer):
 
         message = Message(data)
         envelope = Envelope(message, mailfrom, rcpttos)
-        logging.debug("Message received from peer %r" % (peer,))
-        logging.info("From: %r To: %r Subject: %r"
-            % (mailfrom, rcpttos, str(message.subject)))
+        logging.info("Peer: %r MAIL FROM: %r RCPT TO: %r Subject: %r"
+            % (peer, mailfrom, rcpttos, str(message.subject)))
         try:
             return self.handle_envelope(envelope)
         except:
@@ -214,8 +213,8 @@ class RelayMixin(object):
 
     def deliver(self, message, recipients, sender):
         relay_host = self.configure_relay()
-        logging.info('From: %r To: %r Subject: %r'
-                     % (sender, recipients, str(message.subject)))
+        logging.info('RCPT TO: %r MAIL FROM: %r Subject: %r'
+                     % (recipients, sender, str(message.subject)))
         try:
             relay_host.sendmail(sender, recipients, str(message))
         finally:
