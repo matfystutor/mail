@@ -156,7 +156,7 @@ class ResilientSMTPChannel(smtpd.SMTPChannel):
         # default handle_error to report "uncaptured python exception".
         # This is misleading to the user as it sounds like an application bug,
         # when in fact it is caused by the remote peer not responding.
-        exc_type, exc_value, exc_tb = sys.exc_info()
+        exc_value = sys.exc_info()[1]
         if isinstance(exc_value, TimeoutError):
             logging.error("recv timed out; closing ResilientSMTPChannel")
             self.close()

@@ -53,7 +53,7 @@ class TKForwarder(SMTPForwarder):
             envelope, str(exn), 'Invalid recipient: %s' % exn)
 
     def handle_error(self, envelope):
-        exc_type, exc_value, tb = sys.exc_info()
+        exc_value = sys.exc_info()[1]
         tb = ''.join(traceback.format_exc())
         self.store_failed_envelope(
             envelope, str(tb),
