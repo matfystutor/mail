@@ -26,9 +26,9 @@ class Message(object):
             a = message.rstrip('\n')
             b = str(self).rstrip('\n')
 
-            if a == b:
-                logging.debug('Data is sane')
-            else:
+            if a != b:
+                # Data is not preserved exactly.
+                # Try stripping trailing spaces from lines.
                 a_lines = tuple(line.rstrip(' ') for line in a.splitlines())
                 b_lines = tuple(line.rstrip(' ') for line in b.splitlines())
                 if a_lines == b_lines:
@@ -41,6 +41,7 @@ class Message(object):
                         for s in amavis_warnings:
                             logging.debug(s)
                     else:
+                        # Data is probably not valid.
                         logging.debug('Data is not sane')
                         logging.debug(repr(message))
                         logging.debug(repr(str(self)))
