@@ -1,5 +1,4 @@
 import re
-import logging
 
 from emailtunnel import InvalidRecipient
 from tkmail.database import Database
@@ -73,8 +72,6 @@ def parse_recipient(recipient, db, currentYear):
         else: # minus
             recipient_ids = recipient_ids.difference(personIds)
 
-    # logging.debug("TKMail.py: size of recipient_ids: %d" % len(recipient_ids))
-
     return recipient_ids
 
 
@@ -111,29 +108,20 @@ def parse_alias(alias, db, currentYear):
         groupId, groupType, result = matches[0]
 
         if groupType == 0:##Group, without aging
-            logging.debug("TKMail.py: " + str(result.group("name")))
             personIds = db.get_group_members(groupId)
         elif groupType == 1:##Group with aging
-            logging.debug("TKMail.py: %s pre: %s post: %s"
-                    % (result.group('name'), result.group('pre'),
-                        result.group('post')))
             grad = getGrad(result.group("pre"),
                     result.group("post"),
                     currentYear)
             personIds = db.get_grad_group_members(groupId, grad)
         elif groupType == 2:##Titel, with/without aging
-            logging.debug("TKMail.py: %s pre: %s post: %s"
-                    % (result.group('name'), result.group('pre'),
-                        result.group('post')))
             grad = getGrad(result.group("pre"),
                     result.group("post"),
                     currentYear)
             personIds = db.get_user_by_title(result.group('name'), grad)
         elif groupType == 3:##Direct user
-            logging.debug("TKMail.py: " + result.group("name"))
             personIds = db.get_user_by_id(result.group('name')[6:])
         elif groupType == 4:##BESTFU hack
-            logging.debug("TKMail.py: " + result.group("name"))
             grad = getGrad(result.group("pre"),
                     result.group("post"),
                     currentYear)
