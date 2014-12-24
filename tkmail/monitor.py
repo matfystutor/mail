@@ -92,13 +92,11 @@ def main():
 
     age = now - oldest
 
-    if args.dry_run:
-        logging.info('%s report(s) / age %s (limit is %s / %s)' %
-                     (len(reports), age, MAX_SIZE, MAX_DAYS * 24 * 60 * 60))
-        return
+    logging.info('%s report(s) / age %s (limit is %s / %s)' %
+                 (len(reports), age, MAX_SIZE, MAX_DAYS * 24 * 60 * 60))
 
-    if len(reports) <= MAX_SIZE and age <= MAX_DAYS * 24 * 60 * 60:
-        logging.info('Only %s young reports; exiting' % len(reports))
+    if (args.dry_run or
+        (len(reports) <= MAX_SIZE and age <= MAX_DAYS * 24 * 60 * 60)):
         return
 
     admins = tkmail.address.get_admin_emails()
@@ -162,9 +160,19 @@ def main():
         except smtplib.SMTPServerDisconnected:
             pass
 
+    # If no exception was raised, the following code is run
     for report in reports:
         archive_report(report['basename'])
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        logging.info('monitor exited via KeyboardInterrupt')
+        raise
+    except SystemExit:
+        raise
+    except:
+        logging.exception('monitor exited via exception')
+        raise
