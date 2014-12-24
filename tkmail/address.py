@@ -67,9 +67,9 @@ def parse_recipient(recipient, db, currentYear):
 
     recipient_ids = set()
     for sign, personIds in personIdOps:
-        if sign == '+': # union
+        if sign == '+':  # union
             recipient_ids = recipient_ids.union(personIds)
-        else: # minus
+        else:  # minus
             recipient_ids = recipient_ids.difference(personIds)
 
     return recipient_ids
@@ -89,9 +89,9 @@ def parse_alias(alias, db, currentYear):
         for row in groups:
             groupId, groupRegexp, relativ, groupType = row
             groupId = int(groupId)
-            if relativ == 1: ##Relativ = true
+            if relativ == 1:  # Relativ = true
                 regexp = (r'^%s(?P<name>%s)%s$'
-                        % (anciprefix, groupRegexp, ancipostfix))
+                          % (anciprefix, groupRegexp, ancipostfix))
             else:
                 regexp = '^(?P<name>%s)$' % groupRegexp
             result = re.match(regexp, alias)
@@ -107,34 +107,37 @@ def parse_alias(alias, db, currentYear):
 
         groupId, groupType, result = matches[0]
 
-        if groupType == 0:##Group, without aging
+        if groupType == 0:  # Group, without aging
             personIds = db.get_group_members(groupId)
-        elif groupType == 1:##Group with aging
-            grad = getGrad(result.group("pre"),
-                    result.group("post"),
-                    currentYear)
+        elif groupType == 1:  # Group with aging
+            grad = getGrad(
+                result.group("pre"),
+                result.group("post"),
+                currentYear)
             personIds = db.get_grad_group_members(groupId, grad)
-        elif groupType == 2:##Titel, with/without aging
-            grad = getGrad(result.group("pre"),
-                    result.group("post"),
-                    currentYear)
+        elif groupType == 2:  # Titel, with/without aging
+            grad = getGrad(
+                result.group("pre"),
+                result.group("post"),
+                currentYear)
             personIds = db.get_user_by_title(result.group('name'), grad)
-        elif groupType == 3:##Direct user
+        elif groupType == 3:  # Direct user
             personIds = db.get_user_by_id(result.group('name')[6:])
-        elif groupType == 4:##BESTFU hack
-            grad = getGrad(result.group("pre"),
-                    result.group("post"),
-                    currentYear)
-            personIds = (db.get_grad_group_members(groupId + 1, grad)
-                    + db.get_grad_group_members(groupId - 1, grad))
+        elif groupType == 4:  # BESTFU hack
+            grad = getGrad(
+                result.group("pre"),
+                result.group("post"),
+                currentYear)
+            personIds = (
+                db.get_grad_group_members(groupId + 1, grad)
+                + db.get_grad_group_members(groupId - 1, grad))
         else:
             raise Exception(
                 "Error in table gruppe, type: %s is unknown."
                 % groupType)
 
-
         if not personIds:
-            ##No users in the database fit the current alias
+            # No users in the database fit the current alias
             raise InvalidRecipient(alias)
 
         return personIds
@@ -168,14 +171,14 @@ def getGrad(preFix, postFix, currentYear):
                 raise InvalidRecipient(postFix)
         elif len(postFix) == 2:
             year = int(postFix[0:2])
-            if year > 56: ##19??
+            if year > 56:  # 19??
                 grad = currentYear - (1900 + year)
-            else: ##20??
+            else:  # 20??
                 grad = currentYear - (2000 + year)
         else:
             raise InvalidRecipient(postFix)
 
-    ##Now evaluate the prefix:
+    # Now evaluate the prefix:
     regexpRaised = re.compile(r"([KGBOT])([0-9]+)")
     i = 0
     while i < len(preFix):
