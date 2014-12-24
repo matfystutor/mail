@@ -54,10 +54,12 @@ class TKForwarder(SMTPForwarder):
 
     def handle_error(self, envelope):
         exc_value = sys.exc_info()[1]
+        exc_typename = type(exc_value).__name__
+
         tb = ''.join(traceback.format_exc())
         self.store_failed_envelope(
             envelope, str(tb),
-            '%s: %s' % (type(exc_value).__name__, exc_value))
+            '%s: %s' % (exc_typename, exc_value))
 
         # admin_emails = tkmail.address.get_admin_emails()
         admin_emails = ['mathiasrav@gmail.com']
