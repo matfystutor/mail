@@ -59,7 +59,7 @@ class Database(object):
 
     def get_people(self, **kwargs):
         column_list = ("id navn email accepteremail accepterdirektemail "
-                "gade husnr postnr postby land gone tlf note".split())
+                       "gade husnr postnr postby land gone tlf note".split())
         columns = ', '.join("`%s`" % column for column in column_list)
 
         clauses = []
@@ -77,8 +77,10 @@ class Database(object):
 
         format_args = [param for expr, param in clauses]
 
-        rows = self._fetchall("SELECT %s FROM `tkfolk` WHERE %s"
-            % (columns, where_clause), *format_args)
+        rows = self._fetchall(
+            "SELECT %s FROM `tkfolk` WHERE %s"
+            % (columns, where_clause),
+            *format_args)
 
         return [dict(zip(column_list, row)) for row in rows]
 

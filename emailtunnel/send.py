@@ -5,6 +5,7 @@ import email.message
 
 from emailtunnel import Message
 
+
 def validate_address(v):
     host, port = v.split(':')
     port = int(port)
@@ -96,7 +97,8 @@ def main(*args, **kwargs):
 
     from email.generator import Generator
     policy = email.message.compat32
-    g = Generator(sys.stdout, maxheaderlen=80, policy=policy, mangle_from_=False)
+    g = Generator(
+        sys.stdout, maxheaderlen=80, policy=policy, mangle_from_=False)
     try:
         g.flatten(message.message, unixfrom=False)
     except:
