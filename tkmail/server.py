@@ -21,6 +21,7 @@ def now_string():
 class TKForwarder(SMTPForwarder):
     def __init__(self, *args, **kwargs):
         self.year = kwargs.pop('year')
+        self.exceptions = set()
         super(TKForwarder, self).__init__(*args, **kwargs)
 
     def startup_log(self):
@@ -55,13 +56,19 @@ class TKForwarder(SMTPForwarder):
     def handle_error(self, envelope):
         exc_value = sys.exc_info()[1]
         exc_typename = type(exc_value).__name__
+        filename, line, function, text = traceback.extract_tb(
+            sys.exc_info()[2])[0]
 
         tb = ''.join(traceback.format_exc())
         self.store_failed_envelope(
             envelope, str(tb),
             '%s: %s' % (exc_typename, exc_value))
 
-        self.forward_to_admin(envelope, tb)
+        exc_key = (filename, line, exc_typename)
+
+        if exc_key not in self.exceptions:
+            self.exceptions.add(exc_key)
+            self.forward_to_admin(envelope, tb)
 
     def forward_to_admin(self, envelope, tb):
         # admin_emails = tkmail.address.get_admin_emails()
