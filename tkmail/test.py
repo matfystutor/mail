@@ -17,7 +17,7 @@ envelopes = []
 
 def deliver_local(message, recipients, sender):
     logging.info("deliver_local: From: %r To: %r Subject: %r"
-        % (sender, recipients, str(message.subject)))
+                 % (sender, recipients, str(message.subject)))
     for recipient in recipients:
         if '@' not in recipient:
             raise smtplib.SMTPDataError(0, 'No @ in %r' % recipient)
