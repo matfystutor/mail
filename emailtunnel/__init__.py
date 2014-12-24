@@ -28,12 +28,17 @@ class Message(object):
 
             if a != b:
                 # Data is not preserved exactly.
-                # Try stripping trailing spaces from lines.
-                a_lines = tuple(line.rstrip(' ') for line in a.splitlines())
-                b_lines = tuple(line.rstrip(' ') for line in b.splitlines())
-                if a_lines == b_lines:
+                # Try stripping trailing spaces from lines
+                # and removing empty lines.
+                def strip(data):
+                    lines = tuple(line.rstrip(' ').replace(': ', ':')
+                                  for line in data.splitlines())
+                    return tuple(line for line in lines if line)
+                a_strip = strip(a)
+                b_strip = strip(b)
+                if a_strip == b_strip:
                     logging.debug(
-                        'Data is sane after stripping trailing spaces')
+                        'Data is sane after stripping')
                 else:
                     amavis_warnings = self.get_all_headers('X-Amavis-Alert')
                     if amavis_warnings:
