@@ -256,7 +256,8 @@ class SMTPForwarder(SMTPReceiver, RelayMixin):
         """May be overridden in subclasses.
 
         Given a list of recipients, return a list of target recipients.
-        By default, processes each recipient using translate_recipient.
+        By default, processes each recipient using translate_recipient,
+        sorts the result, filters out empty addresses and duplicates.
         """
 
         invalid = []
@@ -274,8 +275,15 @@ class SMTPForwarder(SMTPReceiver, RelayMixin):
                     raise ValueError('translate_recipient must return a list, '
                                      'not a string')
                 recipients += list(translated)
+
         if invalid:
             raise InvalidRecipient(invalid)
+
+        # Remove falsy addresses (empty or None)
+        recipients = [addy for addy in recipients if addy]
+        # Remove duplicates
+        recipients = sorted(set(recipients))
+
         return recipients
 
     def translate_recipient(self, rcptto):
