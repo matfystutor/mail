@@ -81,7 +81,8 @@ def main():
             exc_value = sys.exc_info()[1]
             logging.exception('get_report failed')
             report = {
-                'subject': '<get_report(%r) failed: %s>' % (basename, exc_value),
+                'subject': '<get_report(%r) failed: %s>'
+                           % (basename, exc_value),
                 'basename': basename,
             }
         else:
