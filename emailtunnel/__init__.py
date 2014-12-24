@@ -42,7 +42,8 @@ class Message(object):
                 else:
                     amavis_warnings = self.get_all_headers('X-Amavis-Alert')
                     if amavis_warnings:
-                        logging.debug('Data is not sane; contains X-Amavis-Alert:')
+                        logging.debug(
+                            'Data is not sane; contains X-Amavis-Alert:')
                         for s in amavis_warnings:
                             logging.debug(s)
                     else:
@@ -194,7 +195,7 @@ class SMTPReceiver(smtpd.SMTPServer):
         message = Message(data)
         envelope = Envelope(message, mailfrom, rcpttos)
         logging.info("Peer: %r MAIL FROM: %r RCPT TO: %r Subject: %r"
-            % (peer, mailfrom, rcpttos, str(message.subject)))
+                     % (peer, mailfrom, rcpttos, str(message.subject)))
         try:
             return self.handle_envelope(envelope)
         except:
