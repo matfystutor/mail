@@ -61,6 +61,9 @@ class TKForwarder(SMTPForwarder):
             envelope, str(tb),
             '%s: %s' % (exc_typename, exc_value))
 
+        self.forward_to_admin(envelope, tb)
+
+    def forward_to_admin(self, envelope, tb):
         # admin_emails = tkmail.address.get_admin_emails()
         admin_emails = ['mathiasrav@gmail.com']
 
