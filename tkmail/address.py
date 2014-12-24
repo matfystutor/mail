@@ -29,7 +29,7 @@ def translate_recipient(year, name):
     #     raise InvalidRecipient(name)
 
     db = Database()
-    recipient_ids = parse_recipient(name, db, year)
+    recipient_ids = parse_recipient(name.upper(), db, year)
     email_addresses = [
         addy.replace('&#064;', '@')
         for addy in db.get_email_addresses(recipient_ids)

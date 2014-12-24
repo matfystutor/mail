@@ -127,7 +127,7 @@ def main():
     poller.start()
 
     tests = [
-        SameRecipientTest('FORM13', 'FORM2013', 'FORM1314', 'GFORM14'),
+        SameRecipientTest('FORM13', 'FORM2013', 'FORM1314', 'gFORM14'),
         SameRecipientTest('FORM', 'BEST-CERM-INKA-KASS-nf-PR-SEKR-VC'),
         MultipleRecipientTest('BEST'),
         MultipleRecipientTest('BESTFU'),
