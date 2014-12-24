@@ -94,7 +94,7 @@ def parse_alias(alias, db, currentYear):
                         % (anciprefix, groupRegexp, ancipostfix))
             else:
                 regexp = '^(?P<name>%s)$' % groupRegexp
-            result = re.match(regexp, alias, re.I)
+            result = re.match(regexp, alias)
             if result:
                 matches.append((groupId, groupType, result))
 
@@ -176,7 +176,7 @@ def getGrad(preFix, postFix, currentYear):
             raise InvalidRecipient(postFix)
 
     ##Now evaluate the prefix:
-    regexpRaised = re.compile(r"([KGBOT])([0-9]+)", re.I)
+    regexpRaised = re.compile(r"([KGBOT])([0-9]+)")
     i = 0
     while i < len(preFix):
         resul = regexpRaised.match(preFix[i:])
