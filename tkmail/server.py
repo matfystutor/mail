@@ -84,6 +84,9 @@ class TKForwarder(SMTPForwarder):
 
         {traceback}
 
+        This exception will not be reported again before the mail server has
+        been restarted.
+
         Envelope sender: {mailfrom}
         Envelope recipients: {rcpttos}
         Envelope message:
