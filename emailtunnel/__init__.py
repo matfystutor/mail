@@ -316,6 +316,9 @@ class SMTPForwarder(SMTPReceiver, RelayMixin):
         """
         return envelope.mailfrom
 
+    def log_invalid_recipient(self, envelope, exn):
+        logging.error(repr(exn))
+
     def handle_invalid_recipient(self, envelope, exn):
         pass
 
@@ -332,10 +335,10 @@ class SMTPForwarder(SMTPReceiver, RelayMixin):
 
         try:
             recipients = self.translate_recipients(envelope.rcpttos)
-        except InvalidRecipient as e:
-            logging.error(repr(e))
+        except InvalidRecipient as exn:
+            self.log_invalid_recipient(envelope, exn)
 
-            self.handle_invalid_recipient(envelope, e)
+            self.handle_invalid_recipient(envelope, exn)
 
             return '550 Requested action not taken: mailbox unavailable'
 
