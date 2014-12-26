@@ -210,7 +210,7 @@ class SMTPReceiver(smtpd.SMTPServer):
 
     def startup_log(self):
         logging.debug('Initialize SMTPReceiver on %s:%s'
-                      % (self.host, pself.ort))
+                      % (self.host, self.port))
 
     def process_message(self, peer, mailfrom, rcpttos, data):
         """Implementation of SMTPServer.process_message.
