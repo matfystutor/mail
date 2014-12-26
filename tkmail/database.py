@@ -66,7 +66,7 @@ class Database(object):
         for k, v in kwargs.items():
             if k == 'id__in':
                 id_string = ','.join('"%s"' % each for each in v)
-                clauses.push(('`id` IN %s', id_string))
+                clauses.append(('`id` IN %s', id_string))
             else:
                 raise TypeError('unknown kwarg "%s"' % k)
 
