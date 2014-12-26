@@ -184,7 +184,7 @@ class SMTPReceiver(smtpd.SMTPServer):
                       % (self.host, pself.ort))
 
     def process_message(self, peer, mailfrom, rcpttos, data):
-        """Implementation of SMTPReceiver.process_message.
+        """Implementation of SMTPServer.process_message.
 
         peer is a tuple of (ipaddr, port).
         mailfrom is the raw sender address.
