@@ -132,7 +132,10 @@ class Message(object):
 
     @property
     def subject(self):
-        return self.get_unique_header('Subject')
+        try:
+            return self.get_unique_header('Subject')
+        except KeyError:
+            return ''
 
     @subject.setter
     def subject(self, s):
