@@ -7,3 +7,4 @@ __pycache__
 /tkmail.log
 /tkmail/config.py
 *.pyc
+/insane
