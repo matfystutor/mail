@@ -29,51 +29,59 @@ class Message(object):
         if message:
             self.message = email.message_from_string(message)
 
-            a = message.rstrip('\n')
-            b = str(self).rstrip('\n')
+            self._sanity_check(message)
 
-            if a != b:
-                # Data is not preserved exactly.
-                # Try stripping trailing spaces from lines
-                # and removing empty lines.
-                def strip(data):
-                    lines = tuple(line.rstrip(' ').replace(': ', ':')
-                                  for line in data.splitlines())
-                    return tuple(line for line in lines if line)
-                a_strip = strip(a)
-                b_strip = strip(b)
-                if a_strip == b_strip:
-                    logging.debug(
-                        'Data is sane after stripping')
-                else:
-                    amavis_warnings = self.get_all_headers('X-Amavis-Alert')
-                    if amavis_warnings:
-                        logging.debug(
-                            'Data is not sane; contains X-Amavis-Alert:')
-                        for s in amavis_warnings:
-                            logging.debug(s)
-                    else:
-                        # Data is probably not valid.
-                        try:
-                            dirname = 'insane'
-                            basename = os.path.join(dirname, now_string())
-                            try:
-                                os.mkdir(dirname)
-                            except FileExistsError:
-                                pass
-                            with open(basename + '.in', 'a') as fp:
-                                fp.write(message)
-                            with open(basename + '.out', 'a') as fp:
-                                fp.write(str(self))
-                            logging.debug(
-                                'Data is not sane; logging to %s'
-                                % (basename,))
-                        except:
-                            logging.exception(
-                                'Data is not sane; could not log to %s'
-                                % (basename,))
         else:
             self.message = email.mime.multipart.MIMEMultipart()
+
+    def _sanity_check(self, message):
+        a = message.rstrip('\n')
+        b = str(self).rstrip('\n')
+
+        if a == b:
+            return
+
+        # Data is not preserved exactly.
+        # Try stripping trailing spaces from lines
+        # and removing empty lines.
+
+        a_strip = self._sanity_strip(a)
+        b_strip = self._sanity_strip(b)
+        if a_strip == b_strip:
+            logging.debug('Data is sane after stripping')
+            return
+
+        amavis_warnings = self.get_all_headers('X-Amavis-Alert')
+        if amavis_warnings:
+            logging.debug('Data is not sane; contains X-Amavis-Alert:')
+            for s in amavis_warnings:
+                logging.debug(s)
+        else:
+            # Data is probably not valid.
+            self._sanity_log_invalid(message)
+
+    def _sanity_strip(self, data):
+        lines = tuple(line.rstrip(' ').replace(': ', ':')
+                      for line in data.splitlines())
+        return tuple(line for line in lines if line)
+
+    def _sanity_log_invalid(self, message):
+        try:
+            dirname = 'insane'
+            basename = os.path.join(dirname, now_string())
+            try:
+                os.mkdir(dirname)
+            except FileExistsError:
+                pass
+            with open(basename + '.in', 'a') as fp:
+                fp.write(message)
+            with open(basename + '.out', 'a') as fp:
+                fp.write(str(self))
+            logging.debug(
+                'Data is not sane; logging to %s' % (basename,))
+        except:
+            logging.exception(
+                'Data is not sane; could not log to %s' % (basename,))
 
     def __str__(self):
         return str(self.message)
