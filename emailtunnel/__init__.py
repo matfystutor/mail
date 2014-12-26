@@ -192,11 +192,13 @@ class SMTPReceiver(smtpd.SMTPServer):
         data is the full text of the message.
         """
 
-        message = Message(data)
-        envelope = Envelope(message, mailfrom, rcpttos)
-        logging.info("Peer: %r MAIL FROM: %r RCPT TO: %r Subject: %r"
-                     % (peer, mailfrom, rcpttos, str(message.subject)))
         try:
+            ipaddr, port = peer
+            message = Message(data)
+            envelope = Envelope(message, mailfrom, rcpttos)
+            logging.info("Peer: %s:%s MAIL FROM: %r RCPT TO: %r Subject: %r"
+                         % (ipaddr, port, mailfrom, rcpttos,
+                            str(message.subject)))
             return self.handle_envelope(envelope)
         except:
             logging.exception("Could not handle envelope!")
