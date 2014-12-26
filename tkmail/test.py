@@ -31,6 +31,8 @@ class DumpReceiver(SMTPReceiver):
 
 
 class RecipientTest(object):
+    _recipients = []
+
     def get_envelopes(self):
         envelopes = []
         for i, recipient in enumerate(self._recipients):
@@ -50,6 +52,9 @@ class RecipientTest(object):
             message = envelope.message
             recipients += envelope.rcpttos
         self.check_recipients(recipients)
+
+    def check_recipients(self, recipients):
+        raise NotImplementedError()
 
 
 class SameRecipientTest(RecipientTest):
