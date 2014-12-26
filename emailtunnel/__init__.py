@@ -1,3 +1,4 @@
+import os
 import json
 import logging
 import datetime
@@ -11,6 +12,11 @@ from email.charset import QP
 
 import smtpd
 import smtplib
+
+
+def now_string():
+    """Return the current date and time as a string."""
+    return datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S.%f")
 
 
 class InvalidRecipient(Exception):
@@ -48,9 +54,24 @@ class Message(object):
                             logging.debug(s)
                     else:
                         # Data is probably not valid.
-                        logging.debug('Data is not sane')
-                        logging.debug(repr(message))
-                        logging.debug(repr(str(self)))
+                        try:
+                            dirname = 'insane'
+                            basename = os.path.join(dirname, now_string())
+                            try:
+                                os.mkdir(dirname)
+                            except FileExistsError:
+                                pass
+                            with open(basename + '.in', 'a') as fp:
+                                fp.write(message)
+                            with open(basename + '.out', 'a') as fp:
+                                fp.write(str(self))
+                            logging.debug(
+                                'Data is not sane; logging to %s'
+                                % (basename,))
+                        except:
+                            logging.exception(
+                                'Data is not sane; could not log to %s'
+                                % (basename,))
         else:
             self.message = email.mime.multipart.MIMEMultipart()
 
