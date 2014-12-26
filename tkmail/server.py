@@ -49,6 +49,10 @@ class TKForwarder(SMTPForwarder):
     def get_envelope_mailfrom(self, envelope):
         return 'admin@TAAGEKAMMERET.dk'
 
+    def log_invalid_recipient(self, envelope, exn):
+        # Use logging.info instead of the default logging.error
+        logging.info('Invalid recipient: %r' % (exn.args,))
+
     def handle_invalid_recipient(self, envelope, exn):
         self.store_failed_envelope(
             envelope, str(exn), 'Invalid recipient: %s' % exn)
