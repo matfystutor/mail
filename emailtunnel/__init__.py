@@ -239,7 +239,7 @@ class SMTPReceiver(smtpd.SMTPServer):
                       % (self.host, self.port))
 
     def process_message(self, peer, mailfrom, rcpttos, data):
-        """Implementation of SMTPServer.process_message.
+        """Overrides SMTPServer.process_message.
 
         peer is a tuple of (ipaddr, port).
         mailfrom is the raw sender address.
