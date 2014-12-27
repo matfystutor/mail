@@ -110,6 +110,4 @@ using `RelayMixin.deliver`, which requires the attributes
 `relay_host` and `relay_port` to be set.
 
 If `InvalidRecipient` is raised during `get_envelope_recipients`, SMTP error
-554 is returned to the SMTP peer (Transaction failed: mailbox unavailable)
-and no email is relayed. We must return 554 instead of the traditional 550,
-since we respond to SMTP DATA, and not to SMTP RCPT.
+550 is returned to the SMTP peer (mailbox unavailable) and no email is relayed.
