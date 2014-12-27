@@ -1,3 +1,26 @@
+"""Lightweight email forwarding framework.
+
+The emailtunnel module depends heavily on the standard library classes
+smtpd.SMTPServer and email.message.Message (and its subclasses).
+
+The emailtunnel module exports the classes:
+SMTPReceiver -- implementation of SMTPServer that handles errors in processing
+RelayMixin -- mixin providing a `deliver` method to send email
+SMTPForwarder -- implementation of SMTPReceiver that forwards emails
+LoggingReceiver -- simple implementation of SMTPReceiver that logs via print()
+Message -- encapsulation of email.message.Message
+Envelope -- connecting a Message to its sender and recipients
+
+The emailtunnel module exports the exception:
+InvalidRecipient -- raised to return SMTP 550 to remote peers
+
+When the module is run from the command-line, SMTPForwarder is instantiated to
+run an open SMTP relay.
+
+See also the submodule:
+emailtunnel.send -- simple construction and sending of email
+"""
+
 import os
 import sys
 import logging
