@@ -309,17 +309,17 @@ class SMTPForwarder(SMTPReceiver, RelayMixin):
         self.relay_port = relay_port
         super(SMTPForwarder, self).__init__(receiver_host, receiver_port)
 
-    def translate_recipients(self, rcpttos):
+    def get_envelope_recipients(self, envelope):
         """May be overridden in subclasses.
 
-        Given a list of recipients, return a list of target recipients.
+        Given an envelope, return a list of target recipients.
         By default, processes each recipient using translate_recipient,
         sorts the result, filters out empty addresses and duplicates.
         """
 
         invalid = []
         recipients = []
-        for rcptto in rcpttos:
+        for rcptto in envelope.rcpttos:
             try:
                 translated = self.translate_recipient(rcptto)
             except InvalidRecipient as e:
@@ -387,7 +387,7 @@ class SMTPForwarder(SMTPReceiver, RelayMixin):
                 envelope.message.subject = new_subject
 
         try:
-            recipients = self.translate_recipients(envelope.rcpttos)
+            recipients = self.get_envelope_recipients(envelope)
         except InvalidRecipient as exn:
             self.log_invalid_recipient(envelope, exn)
 
