@@ -80,9 +80,8 @@ feeds it test messages and checks the relayed messages for correctness.
 
 The main entry point from the `smtpd` module is `SMTPReceiver.process_message`.
 First, the message data is stored in an instance of `Message`,
-which performs a sanity roundtrip parsing check
-to make sure that `str(Message(data)) == str(Message(str(Message(data))))`
-modulo trailing whitespace.
+which performs a sanity roundtrip parsing check to make sure that
+`data == str(Message(data))` modulo trailing whitespace.
 
 Then, the envelope is passed to `handle_envelope`,
 which is implemented in a subclass (such as SMTPForwarder).
