@@ -95,15 +95,18 @@ The subclass may implement `handle_error` to do further logging.
 
 The `SMTPForwarder` class implements `handle_envelope`
 by transforming the Subject via `translate_subject` in the subclass
-and by transforming the list of recipients via `translate_recipients`.
-The default implementation of `translate_recipients` transforms each recipient
-using `translate_recipient`, which is the identity map by default.
+and by transforming the list of recipients via `get_envelope_recipients`.
+The default implementation of `get_envelope_recipients` transforms each
+recipient using `translate_recipient`, which is the identity map by default.
+The forwarded envelope has the sender provided in `get_envelope_mailfrom`.
+The default implementation of `get_envelope_mailfrom` returns the sender
+of the incoming envelope as the outgoing sender.
 
 The envelope is passed on with only the subject changed
 using `RelayMixin.deliver`, which requires the attributes
 `relay_host` and `relay_port` to be set.
 
-If `InvalidRecipient` is raised during `translate_recipients`, SMTP error 554
-is returned to the SMTP peer (Transaction failed: mailbox unavailable)
+If `InvalidRecipient` is raised during `get_envelope_recipients`, SMTP error
+554 is returned to the SMTP peer (Transaction failed: mailbox unavailable)
 and no email is relayed. We must return 554 instead of the traditional 550,
 since we respond to SMTP DATA, and not to SMTP RCPT.
