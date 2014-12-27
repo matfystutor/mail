@@ -1,4 +1,3 @@
-import sys
 import time
 import logging
 import smtplib
@@ -7,7 +6,7 @@ import threading
 
 import email.header
 
-from emailtunnel import SMTPReceiver, Envelope, Message
+from emailtunnel import SMTPReceiver, Envelope
 from tkmail.server import TKForwarder
 import emailtunnel.send
 
@@ -49,7 +48,6 @@ class RecipientTest(object):
     def check_envelopes(self, envelopes):
         recipients = []
         for i, envelope in enumerate(envelopes):
-            message = envelope.message
             recipients += envelope.rcpttos
         self.check_recipients(recipients)
 

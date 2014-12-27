@@ -1,6 +1,5 @@
 import os
 import sys
-import json
 import logging
 import datetime
 
@@ -356,8 +355,6 @@ class SMTPForwarder(SMTPReceiver, RelayMixin):
         pass
 
     def handle_envelope(self, envelope):
-        subject = envelope.message.subject
-
         try:
             new_subject = self.translate_subject(envelope)
         except NotImplementedError:

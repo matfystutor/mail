@@ -95,8 +95,8 @@ def main():
     logging.info('%s report(s) / age %s (limit is %s / %s)' %
                  (len(reports), age, MAX_SIZE, MAX_DAYS * 24 * 60 * 60))
 
-    if (args.dry_run or
-        (len(reports) <= MAX_SIZE and age <= MAX_DAYS * 24 * 60 * 60)):
+    if (args.dry_run or (len(reports) <= MAX_SIZE and
+                         age <= MAX_DAYS * 24 * 60 * 60)):
         return
 
     admins = tkmail.address.get_admin_emails()

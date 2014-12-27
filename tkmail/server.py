@@ -8,7 +8,7 @@ import traceback
 
 import email.header
 
-from emailtunnel import SMTPForwarder, InvalidRecipient, Message
+from emailtunnel import SMTPForwarder, Message
 
 import tkmail.address
 
