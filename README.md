@@ -30,10 +30,14 @@ class SimpleForwarder(emailtunnel.SMTPForwarder):
         return '[Simple-List] %s' % envelope.message.subject
 ```
 
-The `translate_recipient` method either returns a list of external
-recipients to relay the envelope on to these,
-or it may return the empty list to silently drop the email,
-or it may raise `InvalidRecipient` to respond with an SMTP error.
+The `translate_recipient` method either returns a list of external recipients
+to relay the envelope to, or the empty list to silently drop the email,
+or it may raise `InvalidRecipient` to respond with SMTP error 550.
+If another exception is raised while processing the message,
+emailtunnel responds to the SMTP peer with SMTP error 451,
+indicating that the error is temporary, and the peer should try again later.
+In this case, the application should override `handle_error` to inform the
+local admin of the failure.
 
 
 ### Repository overview
