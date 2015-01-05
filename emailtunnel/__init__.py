@@ -22,6 +22,7 @@ emailtunnel.send -- simple construction and sending of email
 """
 
 import os
+import re
 import sys
 import logging
 import datetime
@@ -35,6 +36,11 @@ from email.charset import QP
 
 import smtpd
 import smtplib
+
+
+# From smtplib.py
+def _fix_eols(data):
+    return  re.sub(r'(?:\r\n|\n|\r(?!\n))', "\r\n", data)
 
 
 def now_string():
@@ -60,6 +66,14 @@ class Message(object):
     def _sanity_check(self, message):
         a = message.rstrip('\n')
         b = str(self).rstrip('\n')
+
+        if '\ufffd' in a:
+            logging.debug(
+                'Original message is not sane; contains REPLACEMENT CHARACTER')
+
+        if '\ufffd' in b:
+            logging.debug(
+                'Parsed message is not sane; contains REPLACEMENT CHARACTER')
 
         if a == b:
             return
@@ -194,10 +208,19 @@ class ResilientSMTPChannel(smtpd.SMTPChannel):
         try:
             str_data = str(data, 'utf-8')
         except UnicodeDecodeError:
-            logging.error('ResilientSMTPChannel.collect_incoming_data: ' +
-                          'UnicodeDecodeError encountered; decoding with ' +
-                          'errors=replace')
-            str_data = data.decode('utf-8', 'replace')
+            try:
+                str_data = data.decode('latin1')
+            except UnicodeDecodeError:
+                logging.error(
+                    'ResilientSMTPChannel.collect_incoming_data: ' +
+                    'UnicodeDecodeError encountered; decoding as ' +
+                    'utf-8, errors=replace')
+                str_data = data.decode('utf-8', 'replace')
+            else:
+                logging.warning(
+                    'ResilientSMTPChannel.collect_incoming_data: ' +
+                    'UnicodeDecodeError encountered; decoding as ' +
+                    'latin1')
 
         # str_data.encode('utf-8').decode('utf-8') will surely not raise
         # a UnicodeDecodeError in SMTPChannel.collect_incoming_data.
@@ -295,7 +318,8 @@ class RelayMixin(object):
         logging.info('RCPT TO: %r MAIL FROM: %r Subject: %r'
                      % (recipients, sender, str(message.subject)))
         try:
-            relay_host.sendmail(sender, recipients, str(message))
+            str_message = _fix_eols(str(message))
+            relay_host.sendmail(sender, recipients, str_message.encode('latin1'))
         finally:
             try:
                 relay_host.quit()
