@@ -38,9 +38,14 @@ import smtpd
 import smtplib
 
 
-# From smtplib.py
 def _fix_eols(data):
-    return re.sub(r'(?:\r\n|\n|\r(?!\n))', "\r\n", data)
+    if isinstance(data, str):
+        return re.sub(r'(?:\r\n|\n|\r)', "\r\n", data)
+    elif isinstance(data, bytes):
+        return re.sub(br'(?:\r\n|\n|\r)', b"\r\n", data)
+    else:
+        raise TypeError('data must be str or bytes, not %s'
+                        % type(data).__name__)
 
 
 def now_string():
@@ -54,9 +59,10 @@ class InvalidRecipient(Exception):
 
 class Message(object):
     def __init__(self, message=None):
-        # assert isinstance(message, str)
         if message:
-            self.message = email.message_from_string(message)
+            assert isinstance(message, bytes)
+
+            self.message = email.message_from_bytes(message)
 
             if not self._sanity_check(message):
                 self._sanity_log_invalid(message)
@@ -65,18 +71,8 @@ class Message(object):
             self.message = email.mime.multipart.MIMEMultipart()
 
     def _sanity_check(self, message):
-        a = message.rstrip('\n')
-        b = str(self).rstrip('\n')
-
-        if '\ufffd' in a:
-            logging.debug(
-                'Original message is not sane; contains REPLACEMENT CHARACTER')
-            return False
-
-        if '\ufffd' in b:
-            logging.debug(
-                'Parsed message is not sane; contains REPLACEMENT CHARACTER')
-            return False
+        a = message.rstrip(b'\n')
+        b = self.as_bytes().rstrip(b'\n')
 
         if a == b:
             return True
@@ -100,9 +96,9 @@ class Message(object):
         return False
 
     def _sanity_strip(self, data):
-        lines = tuple(re.sub(r': *', ': ', line.rstrip(' '))
-                      for line in data.splitlines())
-        return tuple(line for line in lines if line)
+        data = re.sub(b': *', 'b: ', data)
+        lines = re.split(br'[\r\n]+', data.rstrip())
+        return tuple(lines)
 
     def _sanity_log_invalid(self, message):
         try:
@@ -124,6 +120,9 @@ class Message(object):
 
     def __str__(self):
         return str(self.message)
+
+    def as_bytes(self):
+        return self.message.as_bytes()
 
     def add_header(self, key, value):
         self.message.add_header(key, value)
@@ -205,24 +204,32 @@ class Envelope(object):
         self.rcpttos = rcpttos
 
 
+def ascii_prefix(bs):
+    """Split bs into (x, y) such that x.encode('ascii') + y == bs."""
+    s = bs.decode('ascii', 'replace')
+    try:
+        i = s.index('\ufffd')
+    except ValueError:
+        return (s, b'')
+
+    # First i characters of bs are ascii,
+    # meaning first i bytes of bs are ascii.
+    x, y = s[:i], bs[i:]
+    assert y and x.encode('ascii') + y == bs
+    return x, y
+
+
 class ResilientSMTPChannel(smtpd.SMTPChannel):
+    """smtpd.SMTPChannel is not encoding agnostic -- it requires UTF-8.
+    As a workaround, we interpret the bytes as latin1,
+    since bytes.decode('latin1') never fails.
+    This "string" is actually a Python 2-style bytestring,
+    but the smtpd module should not care -- it blissfully thinks that
+    everything is nice UTF-8.
+    """
+
     def collect_incoming_data(self, data):
-        try:
-            str_data = str(data, 'utf-8')
-        except UnicodeDecodeError:
-            try:
-                str_data = data.decode('latin1')
-            except UnicodeDecodeError:
-                logging.error(
-                    'ResilientSMTPChannel.collect_incoming_data: ' +
-                    'UnicodeDecodeError encountered; decoding as ' +
-                    'utf-8, errors=replace')
-                str_data = data.decode('utf-8', 'replace')
-            else:
-                logging.warning(
-                    'ResilientSMTPChannel.collect_incoming_data: ' +
-                    'UnicodeDecodeError encountered; decoding as ' +
-                    'latin1')
+        str_data = data.decode('latin1')
 
         # str_data.encode('utf-8').decode('utf-8') will surely not raise
         # a UnicodeDecodeError in SMTPChannel.collect_incoming_data.
@@ -263,14 +270,19 @@ class SMTPReceiver(smtpd.SMTPServer):
         logging.debug('Initialize SMTPReceiver on %s:%s'
                       % (self.host, self.port))
 
-    def process_message(self, peer, mailfrom, rcpttos, data):
+    def process_message(self, peer, mailfrom, rcpttos, str_data):
         """Overrides SMTPServer.process_message.
 
         peer is a tuple of (ipaddr, port).
         mailfrom is the raw sender address.
         rcpttos is a list of raw recipient addresses.
         data is the full text of the message.
+
+        ResilientSMTPChannel packs the bytestring into a Python 2-style
+        bytestring, which we unpack here.
         """
+
+        data = str_data.encode('latin1')
 
         try:
             ipaddr, port = peer
@@ -320,9 +332,8 @@ class RelayMixin(object):
         logging.info('RCPT TO: %r MAIL FROM: %r Subject: %r'
                      % (recipients, sender, str(message.subject)))
         try:
-            str_message = _fix_eols(str(message))
-            relay_host.sendmail(
-                sender, recipients, str_message.encode('latin1'))
+            data = _fix_eols(message.as_bytes())
+            relay_host.sendmail(sender, recipients, data)
         finally:
             try:
                 relay_host.quit()
