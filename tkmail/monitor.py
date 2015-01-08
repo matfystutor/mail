@@ -102,15 +102,14 @@ def main():
 
     keys = 'mailfrom rcpttos subject date summary mtime basename'.split()
 
-    lists = {
-        key: '\n'.join(
-            '%s. %s' % (i + 1, report.get(key))
+    lists = {}
+    for k in keys:
+        lists[k] = '\n'.join(
+            '%s. %s' % (i + 1, report.get(k))
             for i, report in sorted(
                 enumerate(reports),
-                key=lambda x: x[1].get(key)
+                key=lambda x: x[1].get(k)
             ))
-        for key in keys
-    }
 
     body = textwrap.dedent("""
     This is the mail system of TAAGEKAMMERET.
