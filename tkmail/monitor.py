@@ -105,7 +105,10 @@ def main():
     lists = {
         key: ''.join(
             '%s. %s\n' % (i + 1, report.get(key))
-            for i, report in enumerate(reports))
+            for i, report in sorted(
+                enumerate(reports),
+                key=lambda x: x[1].get(key)
+            ))
         for key in keys
     }
 
