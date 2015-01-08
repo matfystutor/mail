@@ -58,7 +58,8 @@ class Message(object):
         if message:
             self.message = email.message_from_string(message)
 
-            self._sanity_check(message)
+            if not self._sanity_check(message):
+                self._sanity_log_invalid(message)
 
         else:
             self.message = email.mime.multipart.MIMEMultipart()
@@ -70,13 +71,15 @@ class Message(object):
         if '\ufffd' in a:
             logging.debug(
                 'Original message is not sane; contains REPLACEMENT CHARACTER')
+            return False
 
         if '\ufffd' in b:
             logging.debug(
                 'Parsed message is not sane; contains REPLACEMENT CHARACTER')
+            return False
 
         if a == b:
-            return
+            return True
 
         # Data is not preserved exactly.
         # Try stripping trailing spaces from lines
@@ -86,16 +89,15 @@ class Message(object):
         b_strip = self._sanity_strip(b)
         if a_strip == b_strip:
             logging.debug('Data is sane after stripping')
-            return
+            return True
 
         amavis_warnings = self.get_all_headers('X-Amavis-Alert')
         if amavis_warnings:
             logging.debug('Data is not sane; contains X-Amavis-Alert:')
             for s in amavis_warnings:
                 logging.debug(s)
-        else:
-            # Data is probably not valid.
-            self._sanity_log_invalid(message)
+
+        return False
 
     def _sanity_strip(self, data):
         lines = tuple(line.rstrip(' ').replace(': ', ':')
