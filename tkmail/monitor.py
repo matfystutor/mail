@@ -100,7 +100,7 @@ def main():
 
     # admins = ['mathiasrav@gmail.com']
 
-    keys = 'mailfrom rcpttos subject date summary mtime'.split()
+    keys = 'mailfrom rcpttos subject date summary mtime basename'.split()
 
     lists = {
         key: ''.join(
@@ -132,6 +132,8 @@ def main():
     Received:
     {lists[mtime]}
 
+    Local reference in errorarchive folder:
+    {lists[basename]}
     """).format(lists=lists)
 
     sender = recipient = 'admin@TAAGEKAMMERET.dk'
