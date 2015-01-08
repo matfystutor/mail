@@ -33,8 +33,7 @@ def get_report(basename):
     with open('error/%s.json' % basename) as fp:
         metadata = json.load(fp)
 
-    with open('error/%s.txt' % basename) as fp:
-        mtime = os.fstat(fp.fileno()).st_mtime
+    mtime = os.stat('error/%s.txt' % basename).st_mtime
 
     report = dict(metadata)
     report['mtime'] = int(mtime)
