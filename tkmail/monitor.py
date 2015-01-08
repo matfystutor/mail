@@ -92,8 +92,8 @@ def main():
     logging.info('%s report(s) / age %s (limit is %s / %s)' %
                  (len(reports), age, MAX_SIZE, MAX_DAYS * 24 * 60 * 60))
 
-    if (args.dry_run or (len(reports) <= MAX_SIZE and
-                         age <= MAX_DAYS * 24 * 60 * 60)):
+    if (not args.dry_run and (len(reports) <= MAX_SIZE and
+                              age <= MAX_DAYS * 24 * 60 * 60)):
         return
 
     admins = tkmail.address.get_admin_emails()
@@ -142,6 +142,10 @@ def main():
     sender = recipient = 'admin@TAAGEKAMMERET.dk'
     message = Message.compose(
         sender, recipient, '[TK-admin] Failed email delivery', body)
+
+    if args.dry_run:
+        print(str(message))
+        return
 
     relay_hostname = '127.0.0.1'
     relay_port = 25
