@@ -40,7 +40,7 @@ import smtplib
 
 # From smtplib.py
 def _fix_eols(data):
-    return  re.sub(r'(?:\r\n|\n|\r(?!\n))', "\r\n", data)
+    return re.sub(r'(?:\r\n|\n|\r(?!\n))', "\r\n", data)
 
 
 def now_string():
@@ -321,7 +321,8 @@ class RelayMixin(object):
                      % (recipients, sender, str(message.subject)))
         try:
             str_message = _fix_eols(str(message))
-            relay_host.sendmail(sender, recipients, str_message.encode('latin1'))
+            relay_host.sendmail(
+                sender, recipients, str_message.encode('latin1'))
         finally:
             try:
                 relay_host.quit()
