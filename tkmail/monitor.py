@@ -103,8 +103,8 @@ def main():
     keys = 'mailfrom rcpttos subject date summary mtime basename'.split()
 
     lists = {
-        key: ''.join(
-            '%s. %s\n' % (i + 1, report.get(key))
+        key: '\n'.join(
+            '%s. %s' % (i + 1, report.get(key))
             for i, report in sorted(
                 enumerate(reports),
                 key=lambda x: x[1].get(key)
