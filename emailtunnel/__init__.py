@@ -100,7 +100,7 @@ class Message(object):
         return False
 
     def _sanity_strip(self, data):
-        lines = tuple(line.rstrip(' ').replace(': ', ':')
+        lines = tuple(re.sub(r': *', ': ', line.rstrip(' '))
                       for line in data.splitlines())
         return tuple(line for line in lines if line)
 
