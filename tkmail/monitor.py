@@ -35,11 +35,9 @@ def get_report(basename):
 
     with open('error/%s.txt' % basename) as fp:
         mtime = os.fstat(fp.fileno()).st_mtime
-        body = fp.read()
 
     report = dict(metadata)
     report['mtime'] = int(mtime)
-    report['body'] = body
     report['basename'] = basename
     return report
 
@@ -112,11 +110,6 @@ def main():
         for key in keys
     }
 
-    messages = ''.join(
-        '%s\n\n%s\n\n' % (60 * '=', report.get('body'))
-        for report in reports
-    )
-
     body = textwrap.dedent("""
     This is the mail system of TAAGEKAMMERET.
 
@@ -140,8 +133,7 @@ def main():
     Received:
     {lists[mtime]}
 
-    {messages}
-    """).format(lists=lists, messages=messages)
+    """).format(lists=lists)
 
     sender = recipient = 'admin@TAAGEKAMMERET.dk'
     message = Message.compose(
