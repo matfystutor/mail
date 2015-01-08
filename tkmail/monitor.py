@@ -144,6 +144,9 @@ def main():
         sender, recipient, '[TK-admin] Failed email delivery', body)
 
     if args.dry_run:
+        print("Envelope sender: %r" % sender)
+        print("Envelope recipients: %r" % admins)
+        print("Envelope message:")
         print(str(message))
         return
 
