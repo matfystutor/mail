@@ -21,6 +21,7 @@ See also the submodule:
 emailtunnel.send -- simple construction and sending of email
 """
 
+from io import BytesIO
 import os
 import re
 import sys
@@ -28,6 +29,7 @@ import logging
 import datetime
 
 import email
+from email.generator import BytesGenerator
 import email.message
 import email.mime.multipart
 # from email.mime.base import MIMEBase
@@ -123,7 +125,20 @@ class Message(object):
         return str(self.message)
 
     def as_bytes(self):
-        return self.message.as_bytes()
+        """Return the entire formatted message as a bytes object."""
+        # Instead of using self.message.as_bytes() directly,
+        # we copy and edit the implementation of email.Message.as_bytes
+        # since it does not accept maxheaderlen, which we wish to set to 0
+        # for transparency.
+
+        policy = self.message.policy
+        fp = BytesIO()
+        g = BytesGenerator(fp,
+                           mangle_from_=False,
+                           maxheaderlen=0,
+                           policy=policy)
+        g.flatten(self.message, unixfrom=None)
+        return fp.getvalue()
 
     def add_header(self, key, value):
         self.message.add_header(key, value)
