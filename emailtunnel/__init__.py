@@ -116,7 +116,8 @@ class Message(object):
                 'Data is not sane; logging to %s' % (basename,))
         except:
             logging.exception(
-                'Data is not sane; could not log to %s' % (basename,))
+                'Data is not sane and could not log to %s; continuing anyway'
+                % (basename,))
 
     def __str__(self):
         return str(self.message)
