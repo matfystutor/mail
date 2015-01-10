@@ -57,47 +57,66 @@ class TKForwarder(SMTPForwarder):
         self.store_failed_envelope(
             envelope, str(exn), 'Invalid recipient: %s' % exn)
 
-    def handle_error(self, envelope):
+    def handle_error(self, envelope, str_data):
         exc_value = sys.exc_info()[1]
         exc_typename = type(exc_value).__name__
         filename, line, function, text = traceback.extract_tb(
             sys.exc_info()[2])[0]
 
         tb = ''.join(traceback.format_exc())
-        self.store_failed_envelope(
-            envelope, str(tb),
-            '%s: %s' % (exc_typename, exc_value))
+        if envelope:
+            self.store_failed_envelope(
+                envelope, str(tb),
+                '%s: %s' % (exc_typename, exc_value))
 
         exc_key = (filename, line, exc_typename)
 
         if exc_key not in self.exceptions:
             self.exceptions.add(exc_key)
-            self.forward_to_admin(envelope, tb)
+            self.forward_to_admin(envelope, str_data, tb)
 
-    def forward_to_admin(self, envelope, tb):
+    def forward_to_admin(self, envelope, str_data, tb):
         # admin_emails = tkmail.address.get_admin_emails()
         admin_emails = ['mathiasrav@gmail.com']
 
         sender = recipient = 'admin@TAAGEKAMMERET.dk'
 
-        subject = '[TK-mail] Unhandled exception in processing'
-        body = textwrap.dedent("""
-        This is the mail system of TAAGEKAMMERET.
+        if envelope:
+            subject = '[TK-mail] Unhandled exception in processing'
+            body = textwrap.dedent("""
+            This is the mail system of TAAGEKAMMERET.
 
-        The following exception was raised when processing the message below:
+            The following exception was raised when processing the message below:
 
-        {traceback}
+            {traceback}
 
-        This exception will not be reported again before the mail server has
-        been restarted.
+            This exception will not be reported again before the mail server has
+            been restarted.
 
-        Envelope sender: {mailfrom}
-        Envelope recipients: {rcpttos}
-        Envelope message:
+            Envelope sender: {mailfrom}
+            Envelope recipients: {rcpttos}
+            Envelope message:
 
-        {message}
-        """).format(traceback=tb, mailfrom=envelope.mailfrom,
-                    rcpttos=envelope.rcpttos, message=envelope.message)
+            {message}
+            """).format(traceback=tb, mailfrom=envelope.mailfrom,
+                        rcpttos=envelope.rcpttos, message=envelope.message)
+
+        else:
+            subject = '[TK-mail] Could not construct envelope'
+            body = textwrap.dedent("""
+            This is the mail system of TAAGEKAMMERET.
+
+            The following exception was raised when CONSTRUCTING AN ENVELOPE:
+
+            {traceback}
+
+            This exception will not be reported again before the mail server has
+            been restarted.
+
+            Raw data:
+
+            {data}
+            """).format(traceback=tb, data=str_data)
 
         admin_message = Message.compose(
             sender, recipient, subject, body)
