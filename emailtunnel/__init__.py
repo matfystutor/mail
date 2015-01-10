@@ -144,7 +144,7 @@ class Message(object):
         if len(values) > 1:
             raise ValueError('Header %r occurs %s times' % (key, len(values)))
         elif len(values) == 0:
-            raise KeyError('header %r' % key)
+            raise KeyError('header %r' % (key,))
         else:
             return values[0]
 
