@@ -19,6 +19,38 @@ def now_string():
 
 
 class TKForwarder(SMTPForwarder):
+    ERROR_TEMPLATE = """
+    This is the mail system of TAAGEKAMMERET.
+
+    The following exception was raised when processing the message below:
+
+    {traceback}
+
+    This exception will not be reported again before the mail server has
+    been restarted.
+
+    Envelope sender: {mailfrom}
+    Envelope recipients: {rcpttos}
+    Envelope message:
+
+    {message}
+    """
+
+    ERROR_TEMPLATE_CONSTRUCTION = """
+    This is the mail system of TAAGEKAMMERET.
+
+    The following exception was raised when CONSTRUCTING AN ENVELOPE:
+
+    {traceback}
+
+    This exception will not be reported again before the mail server has
+    been restarted.
+
+    Raw data:
+
+    {data}
+    """
+
     def __init__(self, *args, **kwargs):
         self.year = kwargs.pop('year')
         self.exceptions = set()
@@ -83,40 +115,14 @@ class TKForwarder(SMTPForwarder):
 
         if envelope:
             subject = '[TK-mail] Unhandled exception in processing'
-            body = textwrap.dedent("""
-            This is the mail system of TAAGEKAMMERET.
-
-            The following exception was raised when processing the message below:
-
-            {traceback}
-
-            This exception will not be reported again before the mail server has
-            been restarted.
-
-            Envelope sender: {mailfrom}
-            Envelope recipients: {rcpttos}
-            Envelope message:
-
-            {message}
-            """).format(traceback=tb, mailfrom=envelope.mailfrom,
-                        rcpttos=envelope.rcpttos, message=envelope.message)
+            body = textwrap.dedent(self.ERROR_TEMPLATE).format(
+                traceback=tb, mailfrom=envelope.mailfrom,
+                rcpttos=envelope.rcpttos, message=envelope.message)
 
         else:
             subject = '[TK-mail] Could not construct envelope'
-            body = textwrap.dedent("""
-            This is the mail system of TAAGEKAMMERET.
-
-            The following exception was raised when CONSTRUCTING AN ENVELOPE:
-
-            {traceback}
-
-            This exception will not be reported again before the mail server has
-            been restarted.
-
-            Raw data:
-
-            {data}
-            """).format(traceback=tb, data=str_data)
+            body = textwrap.dedent(self.ERROR_TEMPLATE_CONSTRUCTION).format(
+                traceback=tb, data=str_data)
 
         admin_message = Message.compose(
             sender, recipient, subject, body)
