@@ -108,10 +108,10 @@ class Message(object):
                 os.mkdir(dirname)
             except FileExistsError:
                 pass
-            with open(basename + '.in', 'a') as fp:
+            with open(basename + '.in', 'ab') as fp:
                 fp.write(message)
-            with open(basename + '.out', 'a') as fp:
-                fp.write(str(self))
+            with open(basename + '.out', 'ab') as fp:
+                fp.write(self.as_bytes())
             logging.debug(
                 'Data is not sane; logging to %s' % (basename,))
         except:
