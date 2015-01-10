@@ -292,11 +292,20 @@ class SMTPReceiver(smtpd.SMTPServer):
             logging.info("Peer: %s:%s MAIL FROM: %r RCPT TO: %r Subject: %r"
                          % (ipaddr, port, mailfrom, rcpttos,
                             str(message.subject)))
+        except:
+            logging.exception("Could not construct envelope!")
+            try:
+                self.handle_error(None, str_data)
+            except:
+                logging.exception("handle_error(None) threw exception")
+            return '451 Requested action aborted: error in processing'
+
+        try:
             return self.handle_envelope(envelope)
         except:
             logging.exception("Could not handle envelope!")
             try:
-                self.handle_error(envelope)
+                self.handle_error(envelope, str_data)
             except:
                 logging.exception("handle_error threw exception")
 
@@ -306,7 +315,7 @@ class SMTPReceiver(smtpd.SMTPServer):
     def handle_envelope(self, envelope):
         raise NotImplementedError()
 
-    def handle_error(self, envelope):
+    def handle_error(self, envelope, str_data):
         pass
 
 
