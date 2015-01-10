@@ -96,7 +96,7 @@ class Message(object):
         return False
 
     def _sanity_strip(self, data):
-        data = re.sub(b': *', 'b: ', data)
+        data = re.sub(b': *', b': ', data)
         lines = re.split(br'[\r\n]+', data.rstrip())
         return tuple(lines)
 
