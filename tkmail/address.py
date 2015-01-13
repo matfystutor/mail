@@ -196,14 +196,8 @@ def getGrad(preFix, postFix, currentYear):
             raise InvalidRecipient(postFix)
 
     # Now evaluate the prefix:
-    regexpRaised = re.compile(r"([KGBOT])([0-9]+)")
-    i = 0
-    while i < len(preFix):
-        resul = regexpRaised.match(preFix[i:])
-        if resul:
-            grad += prefixValues[resul.group(1)] * int(resul.group(2))
-            i += len(resul.group())
-        else:
-            grad += prefixValues[preFix[i]]
-            i += 1
+    for base, exponent in re.findall(r"([KGBOT])([0-9]*)", preFix):
+        exponent = int(exponent or 1)
+        grad += prefixValues[base] * int(exponent)
+
     return grad
