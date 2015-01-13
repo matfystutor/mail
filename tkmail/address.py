@@ -171,6 +171,10 @@ def getGrad(preFix, postFix, currentYear):
     else:
         if len(postFix) == 4:
             first, second = int(postFix[0:2]), int(postFix[2:4])
+            # Note that postFix 1920, 2021 and 2122 are technically ambiguous,
+            # but luckily there was no BEST in 1920 and this script hopefully
+            # won't live until the year 2122, so they are not actually
+            # ambiguous.
             if (first + 1) % 100 == second:
                 # There should be exactly one year between the two numbers
                 if first > 56:
