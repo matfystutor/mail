@@ -100,7 +100,7 @@ class Message(object):
     def _sanity_strip(self, data):
         data = re.sub(b': *', b': ', data)
         lines = re.split(br'[\r\n]+', data.rstrip())
-        return tuple(lines)
+        return tuple(line.rstrip() for line in lines)
 
     def _sanity_log_invalid(self, message):
         try:
