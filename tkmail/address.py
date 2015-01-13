@@ -31,7 +31,7 @@ def translate_recipient(year, name):
     db = Database()
     recipient_ids = parse_recipient(name.upper(), db, year)
     email_addresses = [
-        addy.replace('&#064;', '@')
+        addy.replace('&#064;', '@').strip()
         for addy in db.get_email_addresses(recipient_ids)
     ]
     return email_addresses
