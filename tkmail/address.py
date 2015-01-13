@@ -6,6 +6,11 @@ from tkmail.config import ADMINS
 
 
 def get_admin_emails():
+    """Resolve the group "admin" or fallback if the database is unavailable.
+
+    The default set of admins is set in the tkmail.database module.
+    """
+
     email_addresses = []
     try:
         db = Database()
@@ -23,10 +28,17 @@ def get_admin_emails():
 
 
 def translate_recipient(year, name):
-    # if name.upper() in ('GFORM', 'FORM13', 'FORM2013', 'FORM1314'):
-    #     return ['mathiasrav@gmail.com']
-    # else:
-    #     raise InvalidRecipient(name)
+    """Translate recipient `name` in GF year `year`.
+
+    >>> translate_recipient(2010, "K3FORM")
+    ["mathiasrav@gmail.com"]
+
+    >>> translate_recipient(2010, "GFORM14")
+    ["mathiasrav@gmail.com"]
+
+    >>> translate_recipient(2010, "BEST2013")
+    ["mathiasrav@gmail.com", ...]
+    """
 
     db = Database()
     recipient_ids = parse_recipient(name.upper(), db, year)
@@ -153,6 +165,7 @@ def getGrad(preFix, postFix, currentYear):
     Returnes the corresponding grad of pre,post and currentYear.
     (Calculates as the person have the prefix in year postfix)
     """
+
     if not postFix:
         grad = 0
     else:
