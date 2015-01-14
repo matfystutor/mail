@@ -428,12 +428,11 @@ class SMTPForwarder(SMTPReceiver, RelayMixin):
     def translate_subject(self, envelope):
         """Implement to translate the subject to something else.
 
-        If None is returned, or NotImplementedError is raised,
-        the subject is not changed.
+        If None is returned, the subject is not changed.
         Otherwise, the subject of the message in the given envelope
         is changed to the returned value before being forwarded.
         """
-        raise NotImplementedError()
+        return None
 
     def get_envelope_mailfrom(self, envelope):
         """Compute the address to use as MAIL FROM.
@@ -451,13 +450,9 @@ class SMTPForwarder(SMTPReceiver, RelayMixin):
         pass
 
     def handle_envelope(self, envelope, peer):
-        try:
-            new_subject = self.translate_subject(envelope)
-        except NotImplementedError:
-            pass
-        else:
-            if new_subject is not None:
-                envelope.message.subject = new_subject
+        new_subject = self.translate_subject(envelope)
+        if new_subject is not None:
+            envelope.message.subject = new_subject
 
         try:
             recipients = self.get_envelope_recipients(envelope)
