@@ -30,6 +30,7 @@ import datetime
 
 import email
 from email.generator import BytesGenerator
+from email.header import Header
 import email.message
 import email.mime.multipart
 # from email.mime.base import MIMEBase
@@ -443,6 +444,36 @@ class SMTPForwarder(SMTPReceiver, RelayMixin):
         """
         return envelope.mailfrom
 
+    def get_envelope_received(self, envelope, peer):
+        """Compute the value of the Received:-header to add.
+
+        By default, we add a header with From, By, For and date information
+        according to RFC 2821.
+
+        The implementation may return None to disable the addition
+        of the Received:-header.
+        """
+
+        ipaddr, port = peer
+        return 'from %s\nby %s\nfor %s;\n%s' % (
+            ipaddr, 'emailtunnel.local',
+            ', '.join('<%s>' % rcpt for rcpt in envelope.rcpttos),
+            datetime.datetime.utcnow().strftime(
+                '%a, %e %b %Y %T +0000 (UTC)'),
+        )
+
+    def _get_envelope_received_header(self, envelope, peer):
+        s = self.get_envelope_received(envelope, peer)
+        if s is None:
+            return None
+        lines = [line.strip() for line in s.splitlines()]
+        continuation_ws = '\t'
+        linesep = '\n' + continuation_ws
+        h = Header(linesep.join(lines),
+                   header_name='Received',
+                   continuation_ws=continuation_ws)
+        return h
+
     def log_invalid_recipient(self, envelope, exn):
         logging.error(repr(exn))
 
@@ -464,5 +495,10 @@ class SMTPForwarder(SMTPReceiver, RelayMixin):
             return '550 Requested action not taken: mailbox unavailable'
 
         mailfrom = self.get_envelope_mailfrom(envelope)
+
+        received = self._get_envelope_received_header(envelope, peer)
+
+        if received is not None:
+            envelope.message.add_received_line(received)
 
         self.deliver(envelope.message, recipients, mailfrom)
