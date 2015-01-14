@@ -163,6 +163,10 @@ def main():
         test_envelopes[header].append(envelope)
 
     for i, test in enumerate(tests):
+        for envelope in test_envelopes[test.get_test_id()]:
+            received_objects = envelope.message.get_all_headers('Received')
+            received = [str(o) for o in received_objects]
+            print(repr(received))
         try:
             test.check_envelopes(test_envelopes[test.get_test_id()])
         except AssertionError as e:
