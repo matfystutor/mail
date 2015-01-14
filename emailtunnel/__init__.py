@@ -297,6 +297,33 @@ class SMTPReceiver(smtpd.SMTPServer):
         logging.debug('Initialize SMTPReceiver on %s:%s'
                       % (self.host, self.port))
 
+    def log_receipt(self, peer, envelope):
+        ipaddr, port = peer
+        mailfrom = envelope.mailfrom
+        rcpttos = envelope.rcpttos
+        message = envelope.message
+
+        if type(mailfrom) == str:
+            sender = '<%s>' % mailfrom
+        else:
+            sender = repr(mailfrom)
+
+        if type(rcpttos) == list and all(type(x) == str for x in rcpttos):
+            if len(rcpttos) == 1:
+                recipients = 'To: <%s>' % rcpttos[0]
+            else:
+                recipients = 'To: %s' % ', '.join('<%s>' % x for x in rcpttos)
+        else:
+            recipients = 'To: %s' % (repr(rcpttos),)
+
+        if ipaddr == '127.0.0.1':
+            source = ''
+        else:
+            source = ' Peer: %s:%s' % (ipaddr, port)
+
+        logging.info("Subject: %r From: %s %s%s"
+                     % (str(message.subject), sender, recipients, source))
+
     def process_message(self, peer, mailfrom, rcpttos, str_data):
         """Overrides SMTPServer.process_message.
 
@@ -315,9 +342,6 @@ class SMTPReceiver(smtpd.SMTPServer):
             ipaddr, port = peer
             message = Message(data)
             envelope = Envelope(message, mailfrom, rcpttos)
-            logging.info("Peer: %s:%s MAIL FROM: %r RCPT TO: %r Subject: %r"
-                         % (ipaddr, port, mailfrom, rcpttos,
-                            str(message.subject)))
         except:
             logging.exception("Could not construct envelope!")
             try:
@@ -327,6 +351,7 @@ class SMTPReceiver(smtpd.SMTPServer):
             return '451 Requested action aborted: error in processing'
 
         try:
+            self.log_receipt(peer, envelope)
             return self.handle_envelope(envelope, peer)
         except:
             logging.exception("Could not handle envelope!")
@@ -363,10 +388,13 @@ class RelayMixin(object):
         # relay_host.login(self.username, self.password)
         return relay_host
 
+    def log_delivery(self, message, recipients, sender):
+        logging.info('To: %r From: %r Subject: %r'
+                     % (recipients, sender, str(message.subject)))
+
     def deliver(self, message, recipients, sender):
         relay_host = self.configure_relay()
-        logging.info('RCPT TO: %r MAIL FROM: %r Subject: %r'
-                     % (recipients, sender, str(message.subject)))
+        self.log_delivery(message, recipients, sender)
         try:
             data = _fix_eols(message.as_bytes())
             relay_host.sendmail(sender, recipients, data)
