@@ -140,6 +140,16 @@ class Message(object):
         g.flatten(self.message, unixfrom=None)
         return fp.getvalue()
 
+    def add_received_line(self, value):
+        # This is a hack! email.message.Message does not support
+        # adding headers in front of everything else.
+        # We have to access the internal _headers API to do this.
+
+        headers = list(self.message._headers)
+        self.message._headers = []
+        self.message['Received'] = value
+        self.message._headers += headers
+
     def add_header(self, key, value):
         self.message.add_header(key, value)
 
