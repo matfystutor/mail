@@ -326,7 +326,7 @@ class SMTPReceiver(smtpd.SMTPServer):
             return '451 Requested action aborted: error in processing'
 
         try:
-            return self.handle_envelope(envelope)
+            return self.handle_envelope(envelope, peer)
         except:
             logging.exception("Could not handle envelope!")
             try:
@@ -337,7 +337,7 @@ class SMTPReceiver(smtpd.SMTPServer):
             # Instruct the sender to retry sending the message later.
             return '451 Requested action aborted: error in processing'
 
-    def handle_envelope(self, envelope):
+    def handle_envelope(self, envelope, peer):
         raise NotImplementedError()
 
     def handle_error(self, envelope, str_data):
@@ -347,7 +347,7 @@ class SMTPReceiver(smtpd.SMTPServer):
 class LoggingReceiver(SMTPReceiver):
     """Message handler for --log mode"""
 
-    def handle_envelope(self, envelope):
+    def handle_envelope(self, envelope, peer):
         now = datetime.datetime.now().strftime(' %Y-%m-%d %H:%M:%S ')
         print(now.center(79, '='))
         print(str(envelope.message))
@@ -450,7 +450,7 @@ class SMTPForwarder(SMTPReceiver, RelayMixin):
     def handle_invalid_recipient(self, envelope, exn):
         pass
 
-    def handle_envelope(self, envelope):
+    def handle_envelope(self, envelope, peer):
         try:
             new_subject = self.translate_subject(envelope)
         except NotImplementedError:
