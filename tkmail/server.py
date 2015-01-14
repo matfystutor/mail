@@ -73,7 +73,7 @@ class TKForwarder(SMTPForwarder):
             sender = repr(mailfrom)
 
         if type(rcpttos) == list and all(type(x) == str for x in rcpttos):
-            rcpttos = [re.sub(r'@(T)AAGE(K)AMMERET\.dk$', r'@@\1\2', x)
+            rcpttos = [re.sub(r'@(T)AAGE(K)AMMERET\.dk$', r'@@\1\2', x, re.I)
                        for x in rcpttos]
             if len(rcpttos) == 1:
                 recipients = '<%s>' % rcpttos[0]
