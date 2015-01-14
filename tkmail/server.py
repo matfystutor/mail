@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 import json
 import logging
@@ -60,6 +61,34 @@ class TKForwarder(SMTPForwarder):
         logging.info(
             'TKForwarder listening on %s:%s, relaying to port %s, GF year %s'
             % (self.host, self.port, self.relay_port, self.year))
+
+    def log_receipt(self, peer, envelope):
+        mailfrom = envelope.mailfrom
+        rcpttos = envelope.rcpttos
+        message = envelope.message
+
+        if type(mailfrom) == str:
+            sender = '<%s>' % mailfrom
+        else:
+            sender = repr(mailfrom)
+
+        if type(rcpttos) == list and all(type(x) == str for x in rcpttos):
+            rcpttos = [re.sub(r'@(T)AAGE(K)AMMERET\.dk$', r'@@\1\2', x)
+                       for x in rcpttos]
+            if len(rcpttos) == 1:
+                recipients = '<%s>' % rcpttos[0]
+            else:
+                recipients = ', '.join('<%s>' % x for x in rcpttos)
+        else:
+            recipients = repr(rcpttos)
+
+        logging.info("Subject: %r From: %s To: %s"
+                     % (str(message.subject), sender, recipients))
+
+    def log_delivery(self, message, recipients, sender):
+        recipients = ', '.join('<%s>' % x for x in recipients)
+        logging.info('Subject: %r To: %s'
+                     % (str(message.subject), recipients))
 
     def translate_subject(self, envelope):
         subject = envelope.message.subject
