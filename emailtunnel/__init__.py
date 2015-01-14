@@ -76,27 +76,7 @@ class Message(object):
     def _sanity_check(self, message):
         a = message.rstrip(b'\n')
         b = self.as_bytes().rstrip(b'\n')
-
-        if a == b:
-            return True
-
-        # Data is not preserved exactly.
-        # Try stripping trailing spaces from lines
-        # and removing empty lines.
-
-        a_strip = self._sanity_strip(a)
-        b_strip = self._sanity_strip(b)
-        if a_strip == b_strip:
-            logging.debug('Data is sane after stripping')
-            return True
-
-        amavis_warnings = self.get_all_headers('X-Amavis-Alert')
-        if amavis_warnings:
-            logging.debug('Data is not sane; contains X-Amavis-Alert:')
-            for s in amavis_warnings:
-                logging.debug(s)
-
-        return False
+        return a == b or self._sanity_strip(a) == self._sanity_strip(b)
 
     def _sanity_strip(self, data):
         data = re.sub(b': *', b': ', data)
