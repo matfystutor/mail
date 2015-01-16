@@ -83,13 +83,17 @@ class TKForwarder(SMTPForwarder):
         else:
             recipients = repr(rcpttos)
 
+        subject_parts = email.header.decode_header(message.subject)
+        subject_decoded = str(email.header.make_header(subject_parts))
         logging.info("Subject: %r From: %s To: %s"
-                     % (str(message.subject), sender, recipients))
+                     % (subject_decoded, sender, recipients))
 
     def log_delivery(self, message, recipients, sender):
         recipients = ', '.join('<%s>' % x for x in recipients)
+        subject_parts = email.header.decode_header(message.subject)
+        subject_decoded = str(email.header.make_header(subject_parts))
         logging.info('Subject: %r To: %s'
-                     % (str(message.subject), recipients))
+                     % (subject_decoded, recipients))
 
     def translate_subject(self, envelope):
         subject = envelope.message.subject
