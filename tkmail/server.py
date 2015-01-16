@@ -100,13 +100,14 @@ class TKForwarder(SMTPForwarder):
             return None
 
         try:
-            parts = subject._parts
+            chunks = subject._chunks
         except AttributeError:
-            parts = email.header.decode_header(subject_decoded)
+            logging.warning('envelope.message.subject does not have _chunks')
+            chunks = email.header.decode_header(subject_decoded)
 
-        # No space in '[TK]', since the parts are joined by spaces.
-        subject_parts = [('[TK]', None)] + list(parts)
-        return email.header.make_header(subject_parts)
+        # No space in '[TK]', since the chunks are joined by spaces.
+        subject_chunks = [('[TK]', None)] + list(chunks)
+        return email.header.make_header(subject_chunks)
 
     def translate_recipient(self, rcptto):
         name, domain = rcptto.split('@')
