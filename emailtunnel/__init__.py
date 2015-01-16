@@ -174,9 +174,16 @@ class Message(object):
     @property
     def subject(self):
         try:
-            return self.get_unique_header('Subject')
+            subject = self.get_unique_header('Subject')
         except KeyError:
-            return ''
+            subject = ''
+
+        try:
+            subject_parts = email.header.decode_header(subject)
+        except email.errors.HeaderParseError:
+            subject_parts = [(subject, None)]
+
+        return email.header.make_header(subject_parts)
 
     @subject.setter
     def subject(self, s):

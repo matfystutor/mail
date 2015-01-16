@@ -90,14 +90,18 @@ class SubjectRewriteTest(object):
         ]
 
     def check_envelopes(self, envelopes):
-        output_subject_raw = envelopes[0].message.subject
+        message = envelopes[0].message
+
+        try:
+            output_subject_raw = message.get_unique_header('Subject')
+        except KeyError as e:
+            raise AssertionError('No Subject in message') from e
+
         input_header = email.header.make_header(
             email.header.decode_header(self.subject))
-        output_header = email.header.make_header(
-            email.header.decode_header(output_subject_raw))
 
         input_subject = str(input_header)
-        output_subject = str(output_header)
+        output_subject = str(message.subject)
 
         if '[TK' in input_subject:
             expected_subject = input_subject

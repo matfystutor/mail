@@ -83,30 +83,30 @@ class TKForwarder(SMTPForwarder):
         else:
             recipients = repr(rcpttos)
 
-        subject_parts = email.header.decode_header(message.subject)
-        subject_decoded = str(email.header.make_header(subject_parts))
         logging.info("Subject: %r From: %s To: %s"
-                     % (subject_decoded, sender, recipients))
+                     % (str(message.subject), sender, recipients))
 
     def log_delivery(self, message, recipients, sender):
         recipients = ', '.join('<%s>' % x for x in recipients)
-        subject_parts = email.header.decode_header(message.subject)
-        subject_decoded = str(email.header.make_header(subject_parts))
         logging.info('Subject: %r To: %s'
-                     % (subject_decoded, recipients))
+                     % (str(message.subject), recipients))
 
     def translate_subject(self, envelope):
         subject = envelope.message.subject
-        subject_parts = email.header.decode_header(subject)
-        subject_decoded = str(email.header.make_header(subject_parts))
+        subject_decoded = str(subject)
 
         if '[TK' in subject_decoded:
             # No change
             return None
-        else:
-            # No space in '[TK]', since the parts are joined by spaces.
-            subject_parts = [('[TK]', None)] + list(subject_parts)
-            return email.header.make_header(subject_parts)
+
+        try:
+            parts = subject._parts
+        except AttributeError:
+            parts = email.header.decode_header(subject_decoded)
+
+        # No space in '[TK]', since the parts are joined by spaces.
+        subject_parts = [('[TK]', None)] + list(parts)
+        return email.header.make_header(subject_parts)
 
     def translate_recipient(self, rcptto):
         name, domain = rcptto.split('@')
