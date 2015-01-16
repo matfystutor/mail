@@ -119,6 +119,26 @@ class SubjectRewriteTest(object):
         return str(id(self))
 
 
+class ErroneousSubjectTest(object):
+    def __init__(self, subject):
+        self.subject = subject
+
+    def get_envelopes(self):
+        return [
+            ('-F', 'subject-test@localhost',
+             '-T', 'FORM13@TAAGEKAMMERET.dk',
+             '-s', self.subject,
+             '-I', 'X-test-id', self.get_test_id())
+        ]
+
+    def check_envelopes(self, envelopes):
+        # If the message did not throw an error, we are happy
+        pass
+
+    def get_test_id(self):
+        return str(id(self))
+
+
 def main():
     relayer_port = 11110
     dumper_port = 11111
@@ -146,9 +166,9 @@ def main():
         SubjectRewriteTest('=?UTF-8?Q?Gl=C3=A6delig_jul?='),
         SubjectRewriteTest('=?UTF-8?Q?Re=3A_=5BTK=5D_Gl=C3=A6delig_jul?='),
         # Invalid encoding a; should be skipped by ecre in email.header
-        SubjectRewriteTest('=?UTF-8?a?hello_world?='),
+        ErroneousSubjectTest('=?UTF-8?a?hello_world?='),
         # Invalid base64 data; email.header raises an exception
-        SubjectRewriteTest('=?UTF-8?b?hello_world?='),
+        ErroneousSubjectTest('=?UTF-8?b?hello_world?='),
     ]
     test_envelopes = {
         test.get_test_id(): []
