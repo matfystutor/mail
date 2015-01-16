@@ -141,6 +141,10 @@ def main():
         MultipleRecipientTest('tke'),
         SubjectRewriteTest('=?UTF-8?Q?Gl=C3=A6delig_jul?='),
         SubjectRewriteTest('=?UTF-8?Q?Re=3A_=5BTK=5D_Gl=C3=A6delig_jul?='),
+        # Invalid encoding a; should be skipped by ecre in email.header
+        SubjectRewriteTest('=?UTF-8?a?hello_world?='),
+        # Invalid base64 data; email.header raises an exception
+        SubjectRewriteTest('=?UTF-8?b?hello_world?='),
     ]
     test_envelopes = {
         test.get_test_id(): []
