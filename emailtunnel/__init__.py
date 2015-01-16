@@ -29,12 +29,9 @@ import logging
 import datetime
 
 import email
+import email.mime.multipart
 from email.generator import BytesGenerator
 from email.header import Header
-import email.message
-import email.mime.multipart
-# from email.mime.base import MIMEBase
-import email.charset
 from email.charset import QP
 
 import smtpd
