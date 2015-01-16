@@ -163,7 +163,11 @@ def main():
     logging.debug("%s envelopes" % len(envelopes))
 
     for envelope in envelopes:
-        header = envelope.message.get_unique_header('X-test-id')
+        try:
+            header = envelope.message.get_unique_header('X-test-id')
+        except KeyError:
+            logging.error("Envelope without X-test-id")
+            continue
         test_envelopes[header].append(envelope)
 
     for i, test in enumerate(tests):
@@ -172,7 +176,11 @@ def main():
             received = [str(o) for o in received_objects]
             print(repr(received))
         try:
-            test.check_envelopes(test_envelopes[test.get_test_id()])
+            test_id = test.get_test_id()
+            e = test_envelopes[test_id]
+            if not e:
+                raise AssertionError("No envelopes for test id %r" % test_id)
+            test.check_envelopes(e)
         except AssertionError as e:
             logging.error("Test %s failed: %s" % (i, e))
         else:
