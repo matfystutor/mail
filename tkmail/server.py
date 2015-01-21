@@ -5,6 +5,7 @@ import json
 import logging
 import datetime
 import textwrap
+import itertools
 import traceback
 
 import email.header
