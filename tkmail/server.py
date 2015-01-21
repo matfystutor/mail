@@ -55,6 +55,8 @@ class TKForwarder(SMTPForwarder):
     def __init__(self, *args, **kwargs):
         self.year = kwargs.pop('year')
         self.exceptions = set()
+        self.delivered = 0
+        self.deliver_recipients = {}
         super(TKForwarder, self).__init__(*args, **kwargs)
 
     def startup_log(self):
@@ -87,9 +89,33 @@ class TKForwarder(SMTPForwarder):
                      % (str(message.subject), sender, recipients))
 
     def log_delivery(self, message, recipients, sender):
-        recipients = ', '.join('<%s>' % x for x in recipients)
+        if all('@' in rcpt for rcpt in recipients):
+            parts = [rcpt.split('@', 1) for rcpt in recipients]
+            parts.sort(key=lambda x: (x[1].lower(), x[0].lower()))
+            by_domain = [
+                (domain, [a[0] for a in aa])
+                for domain, aa in itertools.groupby(
+                    parts, key=lambda x: x[1])
+            ]
+            recipients_string = ', '.join(
+                '<%s@%s>' % (','.join(aa), domain)
+                for domain, aa in by_domain)
+        else:
+            recipients_string = ', '.join('<%s>' % x for x in recipients)
+
+        if len(recipients_string) > 200:
+            age = self.deliver_recipients.get(recipients_string)
+            if age is None or self.delivered - age > 40:
+                self.deliver_recipients[recipients_string] = self.delivered
+                recipients_string += ' [%d]' % self.delivered
+            else:
+                recipients_string = '%s... [%d]' % (
+                    recipients_string[:197], age)
+
+        self.delivered += 1
+
         logging.info('Subject: %r To: %s'
-                     % (str(message.subject), recipients))
+                     % (str(message.subject), recipients_string))
 
     def translate_subject(self, envelope):
         subject = envelope.message.subject
