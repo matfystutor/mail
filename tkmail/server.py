@@ -118,6 +118,20 @@ class TKForwarder(SMTPForwarder):
         logging.info('Subject: %r To: %s'
                      % (str(message.subject), recipients_string))
 
+    def reject(self, envelope):
+        rcpttos = tuple(r.lower() for r in envelope.rcpttos)
+        subject = str(envelope.message.subject)
+        return (rcpttos == ('admin@taagekammeret.dk',)
+                and 'Delayed Mail' in subject)
+
+    def handle_envelope(self, envelope, peer):
+        if self.reject(envelope):
+            description = summary = 'Rejected due to TKForwarder.reject'
+            self.store_failed_envelope(envelope, description, summary)
+
+        else:
+            return super(TKForwarder, self).handle_envelope(envelope, peer)
+
     def translate_subject(self, envelope):
         subject = envelope.message.subject
         subject_decoded = str(subject)
