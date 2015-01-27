@@ -88,7 +88,8 @@ def main(*args, **kwargs):
     if args.from_:
         message.add_header('From', args.from_)
 
-    message.subject = args.subject
+    if args.subject is not None:
+        message.subject = args.subject
 
     for key, value in args.header or []:
         message.add_header(key, value)
