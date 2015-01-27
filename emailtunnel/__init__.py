@@ -129,7 +129,7 @@ class Message(object):
         self.message._headers += headers
 
     def add_header(self, key, value):
-        self.message.add_header(key, value)
+        self.message[key] = value
 
     def get_header(self, key, default=None):
         return self.message.get(key, default)
@@ -155,20 +155,19 @@ class Message(object):
         try:
             self.message.replace_header(key, value)
         except KeyError:
-            self.message.add_header(key, value)
+            self.message[key] = value
 
     def set_body_text(self, body, encoding):
         body_part = email.message.MIMEPart()
         if encoding:
             encoded = body.encode(encoding)
             body_part.set_payload(encoded)
-            body_part.add_header(
-                'Content-Type', 'text/plain')
+            body_part['Content-Type'] = 'text/plain'
             email.charset.add_charset(encoding, QP, QP)
             body_part.set_charset(encoding)
         else:
             body_part.set_payload(body)
-            body_part.add_header('Content-Type', 'text/plain')
+            body_part['Content-Type'] = 'text/plain'
         self.message.set_payload(body_part)
 
     @property
