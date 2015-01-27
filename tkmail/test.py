@@ -139,6 +139,22 @@ class ErroneousSubjectTest(object):
         return str(id(self))
 
 
+class NoSubjectTest(object):
+    def get_envelopes(self):
+        return [
+            ('-F', 'no-subject-test@localhost',
+             '-T', 'FORM13@TAAGEKAMMERET.dk',
+             '-I', 'X-test-id', self.get_test_id())
+        ]
+
+    def check_envelopes(self, envelopes):
+        # If the message did not throw an error, we are happy
+        pass
+
+    def get_test_id(self):
+        return str(id(self))
+
+
 def main():
     relayer_port = 11110
     dumper_port = 11111
@@ -169,6 +185,7 @@ def main():
         ErroneousSubjectTest('=?UTF-8?a?hello_world?='),
         # Invalid base64 data; email.header raises an exception
         ErroneousSubjectTest('=?UTF-8?b?hello_world?='),
+        NoSubjectTest(),
     ]
     test_envelopes = {
         test.get_test_id(): []
