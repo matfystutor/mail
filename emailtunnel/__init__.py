@@ -28,6 +28,7 @@ import six
 import sys
 import logging
 import datetime
+import itertools
 
 import email
 import email.mime.multipart
@@ -40,6 +41,22 @@ from email.charset import QP
 
 import smtpd
 import smtplib
+
+
+def abbreviate_recipient_list(recipients):
+    if all('@' in rcpt for rcpt in recipients):
+        parts = [rcpt.split('@', 1) for rcpt in recipients]
+        parts.sort(key=lambda x: (x[1].lower(), x[0].lower()))
+        by_domain = [
+            (domain, [a[0] for a in aa])
+            for domain, aa in itertools.groupby(
+                parts, key=lambda x: x[1])
+        ]
+        return ', '.join(
+            '<%s@%s>' % (','.join(aa), domain)
+            for domain, aa in by_domain)
+    else:
+        return ', '.join('<%s>' % x for x in recipients)
 
 
 def _fix_eols(data):

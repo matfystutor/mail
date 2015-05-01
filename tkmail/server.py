@@ -10,6 +10,7 @@ import traceback
 
 import email.header
 
+import emailtunnel
 from emailtunnel import SMTPForwarder, Message
 
 import tkmail.address
@@ -90,19 +91,7 @@ class TKForwarder(SMTPForwarder):
                      % (str(message.subject), sender, recipients))
 
     def log_delivery(self, message, recipients, sender):
-        if all('@' in rcpt for rcpt in recipients):
-            parts = [rcpt.split('@', 1) for rcpt in recipients]
-            parts.sort(key=lambda x: (x[1].lower(), x[0].lower()))
-            by_domain = [
-                (domain, [a[0] for a in aa])
-                for domain, aa in itertools.groupby(
-                    parts, key=lambda x: x[1])
-            ]
-            recipients_string = ', '.join(
-                '<%s@%s>' % (','.join(aa), domain)
-                for domain, aa in by_domain)
-        else:
-            recipients_string = ', '.join('<%s>' % x for x in recipients)
+        recipients_string = emailtunnel.abbreviate_recipient_list(recipients)
 
         if len(recipients_string) > 200:
             age = self.deliver_recipients.get(recipients_string)
