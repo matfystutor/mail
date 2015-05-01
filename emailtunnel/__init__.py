@@ -355,6 +355,11 @@ class SMTPReceiver(smtpd.SMTPServer):
         """
 
         data = str_data.encode('latin1')
+        if six.PY2:
+            if data.startswith('From nobody'):
+                # Remove first line which contains useless envelope info
+                nl = data.index('\n')
+                data = data[nl+1:]
 
         try:
             ipaddr, port = peer
