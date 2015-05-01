@@ -83,7 +83,10 @@ class Message(object):
         if message:
             assert isinstance(message, bytes)
 
-            self.message = email.message_from_bytes(message)
+            if six.PY3:
+                self.message = email.message_from_bytes(message)
+            else:
+                self.message = email.message_from_string(message)
 
             if not self._sanity_check(message):
                 self._sanity_log_invalid(message)
