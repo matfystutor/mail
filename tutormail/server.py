@@ -1,8 +1,13 @@
 # encoding: utf8
 import os
+import sys
+import json
 import logging
+import datetime
 import textwrap
+import traceback
 
+import emailtunnel
 from emailtunnel import SMTPForwarder, Message, InvalidRecipient
 
 import django
@@ -14,6 +19,11 @@ import mftutor.settings
 
 from mftutor.aliases.models import resolve_alias
 from mftutor.tutor.models import Tutor, TutorGroup, RusClass, Rus
+
+
+def now_string():
+    """Return the current date and time as a string."""
+    return datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S.%f")
 
 
 class ForwardToAdmin(Exception):
@@ -36,8 +46,8 @@ class TutorForwarder(SMTPForwarder):
 
         years = (self.gf_year, self.tutor_year, self.rus_year)
         if all(years):
-            logging.info("Year from kwargs: (%s, %s, %s)" %
-                         (self.gf_year, self.tutor_year, self.rus_year))
+            self.year_log = ("Year from kwargs: (%s, %s, %s)" %
+                             (self.gf_year, self.tutor_year, self.rus_year))
         else:
             if any(years):
                 logging.error("must specify all of gf_year, tutor_year, " +
@@ -45,8 +55,8 @@ class TutorForwarder(SMTPForwarder):
             self.gf_year = mftutor.settings.YEAR
             self.tutor_year = mftutor.settings.TUTORMAIL_YEAR
             self.rus_year = mftutor.settings.RUSMAIL_YEAR
-            logging.info("Year from mftutor.settings: (%s, %s, %s)" %
-                         (self.gf_year, self.tutor_year, self.rus_year))
+            self.year_log = ("Year from mftutor.settings: (%s, %s, %s)" %
+                             (self.gf_year, self.tutor_year, self.rus_year))
 
         self.gf_groups = kwargs.pop(
             'gf_groups', mftutor.settings.GF_GROUPS)
@@ -54,14 +64,21 @@ class TutorForwarder(SMTPForwarder):
             'rusclass_base', mftutor.settings.RUSCLASS_BASE)
         super(TutorForwarder, self).__init__(*args, **kwargs)
 
+        self.exceptions = set()
+
     def handle_envelope(self, envelope, peer):
         try:
             return super(TutorForwarder, self).handle_envelope(envelope, peer)
         except ForwardToAdmin as e:
             self.forward_to_admin(envelope, e.args[0])
 
+    def get_envelope_mailfrom(self, envelope):
+        return 'webfar@matfystutor.dk'
+
     def translate_recipient(self, rcptto):
         name, domain = rcptto.split('@')
+        if name == 'alle':
+            raise ForwardToAdmin('Mail til alle')
         groups = self.get_groups(name)
         if groups:
             emails = self.get_group_emails(name, groups)
@@ -78,18 +95,6 @@ class TutorForwarder(SMTPForwarder):
             return emails
 
         raise InvalidRecipient(name)
-
-    def forward_to_admin(self, envelope, reason):
-        admin_emails = ['mathiasrav@gmail.com']
-        sender = recipient = 'webfar@matfystutor.dk'
-
-        subject = '[TutorForwarder] %s' % (reason[:50],)
-        body = textwrap.dedent(self.ERROR_TEMPLATE).format(
-            reason=reason, message=envelope.message)
-        admin_message = Message.compose(
-            sender, recipient, subject, body)
-        admin_message.add_header('Auto-Submitted', 'auto-replied')
-        self.deliver(admin_message, admin_emails, sender)
 
     def get_groups(self, recipient):
         """Get all TutorGroups that an alias refers to."""
@@ -186,3 +191,92 @@ class TutorForwarder(SMTPForwarder):
         emails = tutor_emails + rus_emails
 
         return sorted(set(email for email in emails if email))
+
+    def startup_log(self):
+        logging.info(
+            'TutorForwarder listening on %s:%s, relaying to port %s, %s'
+            % (self.host, self.port, self.relay_port, self.year_log))
+
+    def log_receipt(self, peer, envelope):
+        mailfrom = envelope.mailfrom
+        rcpttos = envelope.rcpttos
+        message = envelope.message
+
+        if type(mailfrom) == str:
+            sender = '<%s>' % mailfrom
+        else:
+            sender = repr(mailfrom)
+
+        if type(rcpttos) == list and all(type(x) == str for x in rcpttos):
+            recipients = ', '.join('<%s>' % x for x in rcpttos)
+        else:
+            recipients = repr(rcpttos)
+
+        logging.info("Subject: %r From: %s To: %s" %
+                     (str(message.subject), sender, recipients))
+
+    def log_delivery(self, message, recipients, sender):
+        recipients_string = emailtunnel.abbreviate_recipient_list(recipients)
+        logging.info('Subject: %r To: %s'
+                     % (str(message.subject), recipients_string))
+
+    def handle_invalid_recipient(self, envelope, exn):
+        self.store_failed_envelope(
+            envelope, str(exn), 'Invalid recipient: %s' % exn)
+
+    def handle_error(self, envelope, str_data):
+        exc_value = sys.exc_info()[1]
+        exc_typename = type(exc_value).__name__
+        filename, line, function, text = traceback.extract_tb(
+            sys.exc_info()[2])[0]
+
+        tb = ''.join(traceback.format_exc())
+        if envelope:
+            self.store_failed_envelope(
+                envelope, str(tb),
+                '%s: %s' % (exc_typename, exc_value))
+
+        exc_key = (filename, line, exc_typename)
+
+        if exc_key not in self.exceptions:
+            self.exceptions.add(exc_key)
+            self.forward_to_admin(envelope, tb)
+
+    def forward_to_admin(self, envelope, reason):
+        admin_emails = ['mathiasrav@gmail.com']
+        sender = recipient = 'webfar@matfystutor.dk'
+
+        subject = '[TutorForwarder] %s' % (reason[:50],)
+        body = textwrap.dedent(self.ERROR_TEMPLATE).format(
+            reason=reason, message=envelope.message)
+        admin_message = Message.compose(
+            sender, recipient, subject, body)
+        admin_message.add_header('Auto-Submitted', 'auto-replied')
+        self.deliver(admin_message, admin_emails, sender)
+
+    def store_failed_envelope(self, envelope, description, summary):
+        now = now_string()
+
+        try:
+            os.mkdir('error')
+        except OSError:
+            pass
+
+        with open('error/%s.mail' % now, 'wb') as fp:
+            fp.write(envelope.message.as_binary())
+
+        with open('error/%s.json' % now, 'w') as fp:
+            metadata = {
+                'mailfrom': envelope.mailfrom,
+                'rcpttos': envelope.rcpttos,
+                'subject': str(envelope.message.subject),
+                'date': envelope.message.get_header('Date'),
+                'summary': summary,
+            }
+            json.dump(metadata, fp)
+
+        with open('error/%s.txt' % now, 'w') as fp:
+            fp.write('From %s\n' % envelope.mailfrom)
+            fp.write('To %s\n\n' % envelope.rcpttos)
+            fp.write('%s\n' % description)
+            fp.write(str(envelope.message))
