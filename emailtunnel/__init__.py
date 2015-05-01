@@ -24,13 +24,17 @@ emailtunnel.send -- simple construction and sending of email
 from io import BytesIO
 import os
 import re
+import six
 import sys
 import logging
 import datetime
 
 import email
 import email.mime.multipart
-from email.generator import BytesGenerator
+try:
+    from email.generator import BytesGenerator
+except ImportError:
+    pass
 from email.header import Header
 from email.charset import QP
 
@@ -39,9 +43,9 @@ import smtplib
 
 
 def _fix_eols(data):
-    if isinstance(data, str):
+    if isinstance(data, six.string_types):
         return re.sub(r'(?:\r\n|\n|\r)', "\r\n", data)
-    elif isinstance(data, bytes):
+    elif isinstance(data, six.binary_types):
         return re.sub(br'(?:\r\n|\n|\r)', b"\r\n", data)
     else:
         raise TypeError('data must be str or bytes, not %s'
@@ -72,7 +76,7 @@ class Message(object):
 
     def _sanity_check(self, message):
         a = message.rstrip(b'\n')
-        b = self.as_bytes().rstrip(b'\n')
+        b = self.as_binary().rstrip(b'\n')
         return a == b or self._sanity_strip(a) == self._sanity_strip(b)
 
     def _sanity_strip(self, data):
@@ -91,7 +95,7 @@ class Message(object):
             with open(basename + '.in', 'ab') as fp:
                 fp.write(message)
             with open(basename + '.out', 'ab') as fp:
-                fp.write(self.as_bytes())
+                fp.write(self.as_binary())
             logging.debug(
                 'Data is not sane; logging to %s' % (basename,))
         except:
@@ -102,21 +106,29 @@ class Message(object):
     def __str__(self):
         return str(self.message)
 
-    def as_bytes(self):
-        """Return the entire formatted message as a bytes object."""
-        # Instead of using self.message.as_bytes() directly,
-        # we copy and edit the implementation of email.Message.as_bytes
-        # since it does not accept maxheaderlen, which we wish to set to 0
-        # for transparency.
+    if six.PY3:
+        def as_bytes(self):
+            """Return the entire formatted message as a bytes object."""
+            # Instead of using self.message.as_bytes() directly,
+            # we copy and edit the implementation of email.Message.as_bytes
+            # since it does not accept maxheaderlen, which we wish to set to 0
+            # for transparency.
 
-        policy = self.message.policy
-        fp = BytesIO()
-        g = BytesGenerator(fp,
-                           mangle_from_=False,
-                           maxheaderlen=0,
-                           policy=policy)
-        g.flatten(self.message, unixfrom=None)
-        return fp.getvalue()
+            policy = self.message.policy
+            fp = BytesIO()
+            g = BytesGenerator(fp,
+                               mangle_from_=False,
+                               maxheaderlen=0,
+                               policy=policy)
+            g.flatten(self.message, unixfrom=None)
+            return fp.getvalue()
+
+        def as_binary(self):
+            return self.as_bytes()
+
+    else:
+        def as_binary(self):
+            return self.message.as_string(unixfrom=None)
 
     def add_received_line(self, value):
         # This is a hack! email.message.Message does not support
@@ -379,7 +391,7 @@ class RelayMixin(object):
         relay_host = self.configure_relay()
         self.log_delivery(message, recipients, sender)
         try:
-            data = _fix_eols(message.as_bytes())
+            data = _fix_eols(message.as_binary())
             relay_host.sendmail(sender, recipients, data)
         finally:
             try:
