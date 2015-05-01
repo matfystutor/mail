@@ -232,7 +232,10 @@ class Message(object):
         message.add_header(
             'Date',
             datetime.datetime.utcnow().strftime("%a, %d %b %Y %T +0000"))
-        message.set_body_text(body, 'utf-8')
+        if six.PY3:
+            message.set_body_text(body, 'utf-8')
+        else:
+            message.set_body_text(body, None)
         return message
 
 
