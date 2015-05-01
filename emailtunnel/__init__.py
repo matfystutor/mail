@@ -107,7 +107,7 @@ class Message(object):
             basename = os.path.join(dirname, now_string())
             try:
                 os.mkdir(dirname)
-            except FileExistsError:
+            except OSError:
                 pass
             with open(basename + '.in', 'ab') as fp:
                 fp.write(message)
