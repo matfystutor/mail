@@ -187,7 +187,10 @@ class Message(object):
             self.message[key] = value
 
     def set_body_text(self, body, encoding):
-        body_part = email.message.MIMEPart()
+        if six.PY3:
+            body_part = email.message.MIMEPart()
+        else:
+            body_part = email.message.Message()
         if encoding:
             encoded = body.encode(encoding)
             body_part.set_payload(encoded)
