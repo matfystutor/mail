@@ -200,11 +200,11 @@ class TKForwarder(SMTPForwarder):
 
         try:
             os.mkdir('error')
-        except FileExistsError:
+        except OSError:
             pass
 
         with open('error/%s.mail' % now, 'wb') as fp:
-            fp.write(envelope.message.as_bytes())
+            fp.write(envelope.message.as_binary())
 
         with open('error/%s.json' % now, 'w') as fp:
             metadata = {
