@@ -305,7 +305,10 @@ class SMTPReceiver(smtpd.SMTPServer):
     def __init__(self, host, port):
         self.host = host
         self.port = port
-        super(SMTPReceiver, self).__init__((self.host, self.port), None)
+        if six.PY3:
+            super(SMTPReceiver, self).__init__((self.host, self.port), None)
+        else:
+            smtpd.SMTPServer.__init__(self, (self.host, self.port), None)
         self.startup_log()
 
     def startup_log(self):
