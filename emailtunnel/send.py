@@ -1,3 +1,4 @@
+import six
 import sys
 import argparse
 import smtplib
@@ -97,9 +98,13 @@ def main(*args, **kwargs):
     message.set_body_text(body, args.encoding)
 
     from email.generator import Generator
-    policy = email.message.compat32
-    g = Generator(
-        sys.stdout, maxheaderlen=80, policy=policy, mangle_from_=False)
+    if six.PY3:
+        policy = email.message.compat32
+        g = Generator(
+            sys.stdout, maxheaderlen=80, policy=policy, mangle_from_=False)
+    else:
+        g = Generator(
+            sys.stdout, maxheaderlen=80, mangle_from_=False)
     try:
         g.flatten(message.message, unixfrom=False)
     except:
