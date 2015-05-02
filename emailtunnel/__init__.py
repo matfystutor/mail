@@ -376,7 +376,6 @@ class SMTPReceiver(smtpd.SMTPServer):
             data = str_data.encode('latin1')
         else:
             data = str_data
-            logging.debug("Type of str_data is %s" % (type(str_data),))
 
         if six.PY2:
             if data.startswith('From nobody'):
