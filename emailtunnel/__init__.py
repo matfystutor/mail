@@ -88,18 +88,20 @@ class Message(object):
             else:
                 self.message = email.message_from_string(message)
 
-            if not self._sanity_check(message):
+            if not self.sanity_check(message, self.as_binary()):
                 self._sanity_log_invalid(message)
 
         else:
             self.message = email.mime.multipart.MIMEMultipart()
 
-    def _sanity_check(self, message):
-        a = message.rstrip(b'\n')
-        b = self.as_binary().rstrip(b'\n')
-        return a == b or self._sanity_strip(a) == self._sanity_strip(b)
+    @staticmethod
+    def sanity_check(a, b):
+        a = a.rstrip(b'\n')
+        b = b.rstrip(b'\n')
+        return a == b or Message.sanity_strip(a) == Message.sanity_strip(b)
 
-    def _sanity_strip(self, data):
+    @staticmethod
+    def sanity_strip(data):
         data = re.sub(b': *', b': ', data)
         lines = re.split(br'[\r\n]+', data.rstrip())
         return tuple(line.rstrip() for line in lines)
