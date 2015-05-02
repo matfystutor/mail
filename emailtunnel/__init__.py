@@ -104,6 +104,9 @@ class Message(object):
     def sanity_strip(data):
         data = re.sub(b': *', b': ', data)
         lines = re.split(br'[\r\n]+', data.rstrip())
+        # Replace leading whitespace by a single space
+        lines = [b' ' + line.lstrip() if line.lstrip() != line else line
+                 for line in lines]
         return tuple(line.rstrip() for line in lines)
 
     def _sanity_log_invalid(self, message):
