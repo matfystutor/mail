@@ -1,5 +1,6 @@
 import os
 import email
+import argparse
 
 from io import BytesIO, StringIO
 from email.generator import Generator
@@ -8,6 +9,10 @@ import emailtunnel
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-x', '--delete', action='store_true')
+    args = parser.parse_args()
+
     for filename in sorted(os.listdir('insane')):
         if filename.endswith('.in'):
             with open('insane/%s' % filename, 'rb') as fp:
@@ -44,6 +49,10 @@ def main():
                 print(o)
             else:
                 print("%s: Not OK" % (filename,))
+
+            if args.delete and (a == b or a_s == b_s):
+                os.remove('insane/%s' % filename)
+                os.remove('insane/%s' % filename.replace('.in', '.out'))
 
 
 if __name__ == "__main__":
