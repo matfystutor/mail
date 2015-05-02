@@ -317,7 +317,8 @@ class ResilientSMTPChannel(smtpd.SMTPChannel):
 
 
 class SMTPReceiver(smtpd.SMTPServer):
-    channel_class = ResilientSMTPChannel
+    if six.PY3:
+        channel_class = ResilientSMTPChannel
 
     def __init__(self, host, port):
         self.host = host
@@ -371,7 +372,12 @@ class SMTPReceiver(smtpd.SMTPServer):
         bytestring, which we unpack here.
         """
 
-        data = str_data.encode('latin1')
+        if six.PY3:
+            data = str_data.encode('latin1')
+        else:
+            data = str_data
+            logging.debug("Type of str_data is %s" % (type(str_data),))
+
         if six.PY2:
             if data.startswith('From nobody'):
                 # Remove first line which contains useless envelope info
