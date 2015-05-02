@@ -153,7 +153,13 @@ class Message(object):
 
     else:
         def as_binary(self):
-            return self.message.as_string(unixfrom=None)
+            from email.generator import Generator
+            fp = BytesIO()
+            g = Generator(fp,
+                          mangle_from_=False,
+                          maxheaderlen=0)
+            g.flatten(self.message, unixfrom=False)
+            return fp.getvalue()
 
     def add_received_line(self, value):
         # This is a hack! email.message.Message does not support
