@@ -11,6 +11,7 @@ import emailtunnel
 from emailtunnel import SMTPForwarder, Message, InvalidRecipient
 
 import django
+import django.db
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "mftutor.settings")
 django.setup()
@@ -68,7 +69,9 @@ class TutorForwarder(SMTPForwarder):
 
     def handle_envelope(self, envelope, peer):
         try:
-            return super(TutorForwarder, self).handle_envelope(envelope, peer)
+            result = super(TutorForwarder, self).handle_envelope(envelope, peer)
+            django.db.connection.close()
+            return result
         except ForwardToAdmin as e:
             self.forward_to_admin(envelope, e.args[0])
 
