@@ -128,7 +128,7 @@ class TutorForwarder(SMTPForwarder):
 
         # Is name a tutorgroup?
         try:
-            group = TutorGroup.objects.get(handle=group_name)
+            group = TutorGroup.objects.get(handle=group_name, year=year)
         except TutorGroup.DoesNotExist:
             return None
 
@@ -141,6 +141,8 @@ class TutorForwarder(SMTPForwarder):
     def get_group_emails(self, name, groups):
         emails = []
         for group, year in groups:
+            # TODO: After TutorGroup has a year field, this year-filter is
+            # perhaps unwanted/unnecessary.
             group_tutors = Tutor.objects.filter(
                 groups=group, year=year,
                 early_termination__isnull=True)
