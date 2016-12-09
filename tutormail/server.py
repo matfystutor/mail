@@ -122,6 +122,8 @@ class TutorForwarder(SMTPForwarder, MailholeRelayMixin):
         try:
             group_names = resolve_alias(recipient)
         except Exception:
+            logging.exception("resolve_alias raised an exception - " +
+                              "reconnecting to the database and trying again")
             # https://code.djangoproject.com/ticket/21597#comment:29
             from django.db import connection
             connection.close()
