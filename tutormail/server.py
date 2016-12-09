@@ -116,7 +116,13 @@ class TutorForwarder(SMTPForwarder):
 
     def get_groups(self, recipient):
         """Get all TutorGroups that an alias refers to."""
-        group_names = resolve_alias(recipient)
+        try:
+            group_names = resolve_alias(recipient)
+        except Exception:
+            # https://code.djangoproject.com/ticket/21597#comment:29
+            from django.db import connection
+            connection.close()
+            group_names = resolve_alias(recipient)
         groups = []
         for name in group_names:
             group_and_year = self.get_group(name)
