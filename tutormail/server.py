@@ -83,6 +83,8 @@ class TutorForwarder(SMTPForwarder):
         name, domain = rcptto.split('@')
         if name == 'alle':
             raise ForwardToAdmin('Mail til alle')
+        if name == 'wiki':
+            raise InvalidRecipient(name)
         groups = self.get_groups(name)
         if groups:
             emails = self.get_group_emails(name, groups)
