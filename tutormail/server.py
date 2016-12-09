@@ -68,7 +68,19 @@ class TutorForwarder(SMTPForwarder):
 
         self.exceptions = set()
 
+    def reject(self, envelope):
+        rcpttos = tuple(r.lower() for r in envelope.rcpttos)
+        subject = str(envelope.message.subject)
+        return (rcpttos == ('webfar@matfystutor.dk',)
+                and ('Delayed Mail' in subject
+                     or 'Undelivered Mail Returned to Sender' in subject))
+
     def handle_envelope(self, envelope, peer):
+        if self.reject(envelope):
+            description = summary = 'Rejected due to reject()'
+            self.store_failed_envelope(envelope, description, summary)
+            return
+
         try:
             result = super(TutorForwarder, self).handle_envelope(envelope, peer)
             django.db.connection.close()
