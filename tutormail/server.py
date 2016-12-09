@@ -13,6 +13,7 @@ from emailtunnel import SMTPForwarder, Message, InvalidRecipient
 import django
 import django.db
 
+sys.path.append('/home/mftutor/web/web')
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "mftutor.settings")
 django.setup()
 
