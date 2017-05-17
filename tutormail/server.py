@@ -9,6 +9,7 @@ import traceback
 
 import emailtunnel
 from emailtunnel import SMTPForwarder, Message, InvalidRecipient
+from emailtunnel.mailhole import MailholeRelayMixin
 
 import django
 import django.db
@@ -32,7 +33,7 @@ class ForwardToAdmin(Exception):
     pass
 
 
-class TutorForwarder(SMTPForwarder):
+class TutorForwarder(SMTPForwarder, MailholeRelayMixin):
     ERROR_TEMPLATE = """
     Nedenstående email blev ikke leveret til nogen.
 
