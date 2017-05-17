@@ -98,6 +98,8 @@ class TutorForwarder(SMTPForwarder, MailholeRelayMixin):
             raise ForwardToAdmin('Mail til alle')
         if name == 'wiki':
             raise InvalidRecipient(name)
+        if name == 'ravtest':
+            return ['mathiasrav@outlook.dk']
         groups = self.get_groups(name)
         if groups:
             emails = self.get_group_emails(name, groups)
