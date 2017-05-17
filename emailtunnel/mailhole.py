@@ -21,7 +21,7 @@ class MailholeRelayMixin(RelayMixin):
     def deliver_mailhole(self, message, recipients, sender, mailhole_key):
         with requests.Session() as session:
             message_bytes = re.sub(br'(\r\n|\n|\r)', b'\r\n',
-                                   message.as_bytes())
+                                   message.as_binary())
             for rcpt in recipients:
                 data = dict(
                     key=mailhole_key,
@@ -62,7 +62,7 @@ class MailholeRelayMixin(RelayMixin):
                 if not requests:
                     print("You must `pip install requests`!")
         if ordinary_rcpts:
-            super().deliver(message, ordinary_rcpts, sender)
+            super(MailholeRelayMixin, self).deliver(message, ordinary_rcpts, sender)
 
 
 assert re.match(MailholeRelayMixin.mailhole_pattern, 'test@hotmail.com')
