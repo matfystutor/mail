@@ -68,7 +68,7 @@ class MailholeRelayMixin(RelayMixin):
             if not requests:
                 raise Exception("You must `pip install requests`!")
             self.deliver_mailhole(original_envelope,
-                                  message, mailhole_recipients, sender)
+                                  message, mailhole_rcpts, sender)
         if ordinary_rcpts:
             self.deliver(message, ordinary_rcpts, sender)
 
