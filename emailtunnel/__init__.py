@@ -26,6 +26,7 @@ import os
 import re
 import six
 import sys
+import copy
 import logging
 import datetime
 import itertools
