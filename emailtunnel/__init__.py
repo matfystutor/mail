@@ -449,6 +449,9 @@ class RelayMixin(object):
             except smtplib.SMTPServerDisconnected:
                 pass
 
+    def forward(self, original_envelope, message, recipients, sender):
+        self.deliver(message, recipients, sender)
+
 
 class SMTPForwarder(SMTPReceiver, RelayMixin):
     def __init__(self, receiver_host, receiver_port, relay_host, relay_port):
@@ -554,6 +557,8 @@ class SMTPForwarder(SMTPReceiver, RelayMixin):
         pass
 
     def handle_envelope(self, envelope, peer):
+        original_envelope = copy.deepcopy(envelope)
+
         new_subject = self.translate_subject(envelope)
         if new_subject is not None:
             envelope.message.subject = new_subject
@@ -574,4 +579,5 @@ class SMTPForwarder(SMTPReceiver, RelayMixin):
         if received is not None:
             envelope.message.add_received_line(received)
 
-        self.deliver(envelope.message, recipients, mailfrom)
+        self.forward(original_envelope, envelope.message,
+                     recipients, mailfrom)
