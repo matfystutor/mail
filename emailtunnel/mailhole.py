@@ -28,7 +28,7 @@ class MailholeRelayMixin(RelayMixin):
             raise Exception("You must pip install requests!")
         with requests.Session() as session:
             orig_message_bytes = re.sub(br'(\r\n|\n|\r)', b'\r\n',
-                                        original_envelope.message.as_bytes())
+                                        original_envelope.message.as_binary())
             message_bytes = re.sub(br'(\r\n|\n|\r)', b'\r\n',
                                    message.as_binary())
             data = dict(
