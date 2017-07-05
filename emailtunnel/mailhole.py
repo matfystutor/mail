@@ -1,6 +1,7 @@
 import io
 import os
 import re
+import json
 try:
     import requests
 except ImportError:
@@ -18,31 +19,42 @@ class MailholeRelayMixin(RelayMixin):
     def should_mailhole(self, message, recipient, sender):
         return bool(re.match(self.mailhole_pattern, recipient))
 
-    def deliver_mailhole(self, message, recipients, sender, mailhole_key):
+    def deliver_mailhole(self, original_envelope, message, recipients, sender):
+        mailhole_url = os.environ.get('MAILHOLE_URL', 'https://mail.tket.dk')
+        mailhole_key = self.get_mailhole_key()
+        if not mailhole_key:
+            raise Exception("You must set MAILHOLE_KEY env var!")
+        if not requests:
+            raise Exception("You must pip install requests!")
         with requests.Session() as session:
+            orig_message_bytes = re.sub(br'(\r\n|\n|\r)', b'\r\n',
+                                        original_envelope.message.as_bytes())
             message_bytes = re.sub(br'(\r\n|\n|\r)', b'\r\n',
                                    message.as_binary())
-            for rcpt in recipients:
-                data = dict(
-                    key=mailhole_key,
-                    mail_from=sender,
-                    rcpt_to=rcpt,
-                )
-                files = dict(
-                    message_bytes=('message.msg', io.BytesIO(message_bytes)),
-                )
-                response = session.post(
-                    'https://mail.tket.dk/api/submit/', data=data, files=files)
-                text = response.text
-                status = response.status_code
-                if status != 200 or text.strip() != '250 OK':
-                    raise Exception('From %r to %r: HTTP %s %r' %
-                                    (sender, rcpt, status,
-                                     text.splitlines()[:200]))
-                fake_rcpt = 'https://mail.tket.dk/%s' % rcpt
-                self.log_delivery(message, [fake_rcpt], sender)
+            data = dict(
+                key=mailhole_key,
+                mail_from=sender,
+                rcpt_tos=json.dumps(recipients),
+                orig_mail_from=original_envelope.mailfrom,
+                orig_rcpt_tos=json.dumps(original_envelope.rcpttos),
+            )
+            files = dict(
+                orig_message_bytes=('orig_message.msg',
+                                    io.BytesIO(orig_message_bytes)),
+                message_bytes=('message.msg', io.BytesIO(message_bytes)),
+            )
+            response = session.post(
+                mailhole_url + '/api/submit/', data=data, files=files)
+            text = response.text
+            status = response.status_code
+            if status != 200 or text.strip() != '250 OK':
+                raise Exception('From %r to %r: HTTP %s %r' %
+                                (sender, recipients, status,
+                                 text.splitlines()[:200]))
+            fake_rcpt = 'https://mail.tket.dk/%s' % ','.join(recipients)
+            self.log_delivery(message, [fake_rcpt], sender)
 
-    def deliver(self, message, recipients, sender):
+    def forward(self, original_envelope, message, recipients, sender):
         mailhole_rcpts = []
         ordinary_rcpts = []
         for rcpt in recipients:
@@ -51,18 +63,14 @@ class MailholeRelayMixin(RelayMixin):
             else:
                 ordinary_rcpts.append(rcpt)
         if mailhole_rcpts:
-            mailhole_key = self.get_mailhole_key()
-            if mailhole_key and requests:
-                self.deliver_mailhole(message, mailhole_rcpts, sender,
-                                      mailhole_key)
-            else:
-                ordinary_rcpts = recipients  # ordinary delivery to all
-                if not mailhole_key:
-                    print("You must set MAILHOLE_KEY env var!")
-                if not requests:
-                    print("You must `pip install requests`!")
+            if not self.get_mailhole_key():
+                raise Exception("You must set MAILHOLE_KEY env var!")
+            if not requests:
+                raise Exception("You must `pip install requests`!")
+            self.deliver_mailhole(original_envelope,
+                                  message, mailhole_recipients, sender)
         if ordinary_rcpts:
-            super(MailholeRelayMixin, self).deliver(message, ordinary_rcpts, sender)
+            self.deliver(message, ordinary_rcpts, sender)
 
 
 assert re.match(MailholeRelayMixin.mailhole_pattern, 'test@hotmail.com')
