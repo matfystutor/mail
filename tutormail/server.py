@@ -79,6 +79,10 @@ class TutorForwarder(SMTPForwarder, MailholeRelayMixin):
 
         self.exceptions = set()
 
+    def should_mailhole(self, message, recipient, sender):
+        # Send everything to mailhole
+        return True
+
     def reject(self, envelope):
         rcpttos = tuple(r.lower() for r in envelope.rcpttos)
         subject = str(envelope.message.subject)
