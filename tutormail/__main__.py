@@ -48,13 +48,11 @@ def main():
     server = TutorForwarder(
         receiver_host, receiver_port, relay_host, relay_port)
     try:
-        asyncore.loop(timeout=0.1, use_poll=True)
-    except KeyboardInterrupt:
-        logging.info('TutorForwarder exited via KeyboardInterrupt')
-    except:
+        server.run()
+    except Exception as exn:
         logging.exception('TutorForwarder exited via exception')
     else:
-        logging.error('TutorForwarder exited via asyncore.loop returning')
+        logging.info('TutorForwarder exiting')
 
 
 if __name__ == "__main__":
