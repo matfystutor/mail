@@ -288,7 +288,7 @@ class TutorForwarder(SMTPForwarder, MailholeRelayMixin):
             pass
 
         with open('error/%s.mail' % now, 'wb') as fp:
-            fp.write(envelope.message.as_binary())
+            fp.write(envelope.message.as_bytes())
 
         with open('error/%s.json' % now, 'w') as fp:
             metadata = {
