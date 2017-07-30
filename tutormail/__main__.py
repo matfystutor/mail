@@ -1,25 +1,22 @@
 import os
 import sys
-import six
 import logging
 import argparse
 import asyncore
 
+from emailtunnel import logger
+
 
 def configure_logging():
-    root = logging.getLogger()
     file_handler = logging.FileHandler('tutormail.log', 'a')
     stream_handler = logging.StreamHandler(None)
     fmt = '[%(asctime)s %(levelname)s] %(message)s'
     datefmt = None
-    if six.PY3:
-        formatter = logging.Formatter(fmt, datefmt, '%')
-    else:
-        formatter = logging.Formatter(fmt, datefmt)
+    formatter = logging.Formatter(fmt, datefmt, '%')
     for handler in (file_handler, stream_handler):
         handler.setFormatter(formatter)
-        root.addHandler(handler)
-    root.setLevel(logging.DEBUG)
+        logger.addHandler(handler)
+    logger.setLevel(logging.DEBUG)
 
 
 parser = argparse.ArgumentParser()
