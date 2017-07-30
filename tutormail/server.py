@@ -91,17 +91,16 @@ class TutorForwarder(SMTPForwarder, MailholeRelayMixin):
                      or 'Undelivered Mail Returned to Sender' in subject))
 
     def handle_envelope(self, envelope, peer):
-        if self.reject(envelope):
-            description = summary = 'Rejected due to reject()'
-            self.store_failed_envelope(envelope, description, summary)
-            return
-
         try:
-            result = super(TutorForwarder, self).handle_envelope(envelope, peer)
-            connection.close()
-            return result
+            if self.reject(envelope):
+                description = summary = 'Rejected due to reject()'
+                self.store_failed_envelope(envelope, description, summary)
+                return
+            return super(TutorForwarder, self).handle_envelope(envelope, peer)
         except ForwardToAdmin as e:
             self.forward_to_admin(envelope, e.args[0])
+        finally:
+            connection.close()
 
     def get_envelope_mailfrom(self, envelope):
         return 'webfar@matfystutor.dk'
