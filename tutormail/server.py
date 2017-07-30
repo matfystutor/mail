@@ -12,8 +12,7 @@ from emailtunnel import SMTPForwarder, Message, InvalidRecipient
 from emailtunnel.mailhole import MailholeRelayMixin
 
 from django.db import connection
-
-import mftutor.settings
+from django.conf import settings
 
 from mftutor.aliases.models import resolve_alias
 from mftutor.tutor.models import Tutor, TutorGroup, RusClass, Rus
@@ -66,16 +65,16 @@ class TutorForwarder(SMTPForwarder, MailholeRelayMixin):
             if any(years):
                 logging.error("must specify all of gf_year, tutor_year, " +
                               "rus_year or none of them")
-            self.gf_year = mftutor.settings.YEAR
-            self.tutor_year = mftutor.settings.TUTORMAIL_YEAR
-            self.rus_year = mftutor.settings.RUSMAIL_YEAR
+            self.gf_year = settings.YEAR
+            self.tutor_year = settings.TUTORMAIL_YEAR
+            self.rus_year = settings.RUSMAIL_YEAR
             self.year_log = ("Year from mftutor.settings: (%s, %s, %s)" %
                              (self.gf_year, self.tutor_year, self.rus_year))
 
         self.gf_groups = kwargs.pop(
-            'gf_groups', mftutor.settings.GF_GROUPS)
+            'gf_groups', settings.GF_GROUPS)
         self.rusclass_base = kwargs.pop(
-            'rusclass_base', mftutor.settings.RUSCLASS_BASE)
+            'rusclass_base', settings.RUSCLASS_BASE)
         super(TutorForwarder, self).__init__(*args, **kwargs)
 
         self.exceptions = set()
