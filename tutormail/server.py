@@ -19,6 +19,22 @@ from mftutor.aliases.models import resolve_alias
 from mftutor.tutor.models import Tutor, TutorGroup, RusClass, Rus
 
 
+def abbreviate_recipient_list(recipients):
+    if all('@' in rcpt for rcpt in recipients):
+        parts = [rcpt.split('@', 1) for rcpt in recipients]
+        parts.sort(key=lambda x: (x[1].lower(), x[0].lower()))
+        by_domain = [
+            (domain, [a[0] for a in aa])
+            for domain, aa in itertools.groupby(
+                parts, key=lambda x: x[1])
+        ]
+        return ', '.join(
+            '<%s@%s>' % (','.join(aa), domain)
+            for domain, aa in by_domain)
+    else:
+        return ', '.join('<%s>' % x for x in recipients)
+
+
 def now_string():
     """Return the current date and time as a string."""
     return datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S.%f")
@@ -241,7 +257,7 @@ class TutorForwarder(SMTPForwarder, MailholeRelayMixin):
                      (str(message.subject), sender, recipients))
 
     def log_delivery(self, message, recipients, sender):
-        recipients_string = emailtunnel.abbreviate_recipient_list(recipients)
+        recipients_string = abbreviate_recipient_list(recipients)
         logging.info('Subject: %r To: %s'
                      % (str(message.subject), recipients_string))
 
