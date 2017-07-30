@@ -15,9 +15,8 @@ MAILHOLE_KEY=my_mailhole_key python -m tutormail -d path/to/tutorweb
 
 Når mailserveren starter op, skriver den noget à la:
 
-```
-TutorForwarder listening on 0.0.0.0:9001, relaying to port 25, Year from mftutor.settings: (2018, 2017, 2017)
-```
+`TutorForwarder listening on 0.0.0.0:9001, relaying to mailhole.
+Year from mftutor.settings: (2018, 2017, 2017)`
 
 Tuplen `(2018, 2017, 2017)` betyder at GF-året er sat til 2018;
 tutoråret til 2017; og rusåret til 2017.
