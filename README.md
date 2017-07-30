@@ -25,6 +25,28 @@ Det betyder at
 * emails til 1. stormøde-bestemte grupper (dvs. de fleste) skal sendes til 2017-grupper;
 * emails til rushold og holdtutorer skal sendes til 2017-lister.
 
+Det betyder desuden at når man
+**ændrer på GF-året/tutoråret/rusåret, skal mailserveren genstartes**.
 
-I `tutormail/server.py` defineres klassen `TutorForwarder`
-som står for at modtage og videresende emails.
+Emails bliver videresendt til mailhole på https://mail.tket.dk
+hvorfra de bliver videresendt til tutorer og russer.
+Her skal `MAILHOLE_KEY` ovenfor
+sættes til en nøgle der også er konfigureret i mailhole.
+
+Emaillister hentes direkte fra Django-databasen
+ved at importere `mftutor.tutor.models`
+og lave Django queryset-opslag.
+
+Den overordnede metode er `translate_recipient()`
+i `TutorForwarder` i `tutormail/server.py`.
+Her implementeres logikken der følger gruppealiaser,
+finder passende grupper i passende årgange,
+og finder tutorers emailadresser.
+Desuden er der logik til at finde rushold/holdtutorers emailadresser.
+
+
+## Delivery status notifications
+
+Når en DSN (delivery status notification) sendes retur til webfar@matfystutor.dk
+bliver den fanget i `error`-mappen af mailserveren.
+Det sker via `TutorForwarder.reject()` metoden.
