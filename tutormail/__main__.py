@@ -1,9 +1,9 @@
+import os
+import sys
 import six
 import logging
 import argparse
 import asyncore
-
-from tutormail.server import TutorForwarder
 
 
 def configure_logging():
@@ -22,24 +22,31 @@ def configure_logging():
     root.setLevel(logging.DEBUG)
 
 
-def get_parser():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-p', '--port', type=int, default=25,
-                        help='Relay port')
-    parser.add_argument('-P', '--listen-port', type=int, default=9001,
-                        help='Listen port')
-    return parser
+parser = argparse.ArgumentParser()
+parser.add_argument('-d', '--project-path', required=True,
+                    help='Path to github.com/matfystutor/web.git repo')
+parser.add_argument('-p', '--port', type=int, default=25,
+                    help='Relay port')
+parser.add_argument('-P', '--listen-port', type=int, default=9001,
+                    help='Listen port')
 
 
 def main():
     configure_logging()
-    parser = get_parser()
     args = parser.parse_args()
+    sys.path.append(args.project_path)
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "mftutor.settings")
+
+    import django
+    django.setup()
 
     receiver_host = '127.0.0.1'
     receiver_port = args.listen_port
     relay_host = '127.0.0.1'
     relay_port = args.port
+
+    # Delay importing TutorForwarder to allow configuring Django first
+    from tutormail.server import TutorForwarder
 
     server = TutorForwarder(
         receiver_host, receiver_port, relay_host, relay_port)

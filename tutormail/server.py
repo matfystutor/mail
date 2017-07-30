@@ -11,12 +11,7 @@ import emailtunnel
 from emailtunnel import SMTPForwarder, Message, InvalidRecipient
 from emailtunnel.mailhole import MailholeRelayMixin
 
-import django
 import django.db
-
-sys.path.append('/home/mftutor/web/web')
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "mftutor.settings")
-django.setup()
 
 import mftutor.settings
 
