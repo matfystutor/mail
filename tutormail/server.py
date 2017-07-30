@@ -11,7 +11,7 @@ import emailtunnel
 from emailtunnel import SMTPForwarder, Message, InvalidRecipient
 from emailtunnel.mailhole import MailholeRelayMixin
 
-import django.db
+from django.db import connection
 
 import mftutor.settings
 
@@ -79,7 +79,7 @@ class TutorForwarder(SMTPForwarder, MailholeRelayMixin):
 
         try:
             result = super(TutorForwarder, self).handle_envelope(envelope, peer)
-            django.db.connection.close()
+            connection.close()
             return result
         except ForwardToAdmin as e:
             self.forward_to_admin(envelope, e.args[0])
@@ -120,7 +120,6 @@ class TutorForwarder(SMTPForwarder, MailholeRelayMixin):
             logging.exception("resolve_alias raised an exception - " +
                               "reconnecting to the database and trying again")
             # https://code.djangoproject.com/ticket/21597#comment:29
-            from django.db import connection
             connection.close()
             group_names = resolve_alias(recipient)
         groups = []
