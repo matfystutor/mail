@@ -5,9 +5,9 @@ import json
 import logging
 import datetime
 import textwrap
+import itertools
 import traceback
 
-import emailtunnel
 from emailtunnel import SMTPForwarder, Message, InvalidRecipient
 from emailtunnel.mailhole import MailholeRelayMixin
 
