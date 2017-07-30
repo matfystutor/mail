@@ -2,13 +2,12 @@
 import os
 import sys
 import json
-import logging
 import datetime
 import textwrap
 import itertools
 import traceback
 
-from emailtunnel import SMTPForwarder, Message, InvalidRecipient
+from emailtunnel import SMTPForwarder, Message, InvalidRecipient, logger
 from emailtunnel.mailhole import MailholeRelayMixin
 
 from django.db import connection
@@ -63,8 +62,8 @@ class TutorForwarder(SMTPForwarder, MailholeRelayMixin):
                              (self.gf_year, self.tutor_year, self.rus_year))
         else:
             if any(years):
-                logging.error("must specify all of gf_year, tutor_year, " +
-                              "rus_year or none of them")
+                logger.error("must specify all of gf_year, tutor_year, " +
+                             "rus_year or none of them")
             self.gf_year = settings.YEAR
             self.tutor_year = settings.TUTORMAIL_YEAR
             self.rus_year = settings.RUSMAIL_YEAR
@@ -82,6 +81,11 @@ class TutorForwarder(SMTPForwarder, MailholeRelayMixin):
     def should_mailhole(self, message, recipient, sender):
         # Send everything to mailhole
         return True
+
+    def startup_log(self):
+        logger.info('TutorForwarder listening on %s:%s, ' +
+                    'relaying to mailhole. %s',
+                    self.host, self.port, self.year_log)
 
     def reject(self, envelope):
         rcpttos = tuple(r.lower() for r in envelope.rcpttos)
@@ -135,8 +139,8 @@ class TutorForwarder(SMTPForwarder, MailholeRelayMixin):
         try:
             group_names = resolve_alias(recipient)
         except Exception:
-            logging.exception("resolve_alias raised an exception - " +
-                              "reconnecting to the database and trying again")
+            logger.exception("resolve_alias raised an exception - " +
+                             "reconnecting to the database and trying again")
             # https://code.djangoproject.com/ticket/21597#comment:29
             connection.close()
             group_names = resolve_alias(recipient)
@@ -235,11 +239,6 @@ class TutorForwarder(SMTPForwarder, MailholeRelayMixin):
 
         return sorted(set(email for email in emails if email))
 
-    def startup_log(self):
-        logging.info(
-            'TutorForwarder listening on %s:%s, relaying to port %s, %s'
-            % (self.host, self.port, self.relay_port, self.year_log))
-
     def log_receipt(self, peer, envelope):
         mailfrom = envelope.mailfrom
         rcpttos = envelope.rcpttos
@@ -255,13 +254,13 @@ class TutorForwarder(SMTPForwarder, MailholeRelayMixin):
         else:
             recipients = repr(rcpttos)
 
-        logging.info("Subject: %r From: %s To: %s" %
-                     (str(message.subject), sender, recipients))
+        logger.info("Subject: %r From: %s To: %s",
+                    str(message.subject), sender, recipients)
 
     def log_delivery(self, message, recipients, sender):
         recipients_string = abbreviate_recipient_list(recipients)
-        logging.info('Subject: %r To: %s'
-                     % (str(message.subject), recipients_string))
+        logger.info('Subject: %r To: %s',
+                    str(message.subject), recipients_string)
 
     def handle_invalid_recipient(self, envelope, exn):
         self.store_failed_envelope(
