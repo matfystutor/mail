@@ -1,0 +1,14 @@
+[Unit]
+Description=orgmail SMTP server
+
+[Install]
+WantedBy=multi-user.target
+
+[Service]
+ExecStart=/home/mftutor/mail/prodekanus/venv/bin/python -m tutormail -d /home/mftutor/web
+Restart=on-failure
+WorkingDirectory=/home/mftutor/mail
+User=mftutor
+Group=mftutor
+Environment=PYTHONPATH=/home/mftutor/mail
+EnvironmentFile=/home/mftutor/mail/prodekanus/mailhole_key.env
