@@ -42,6 +42,12 @@ class ForwardToAdmin(Exception):
     pass
 
 
+def get_tutorprofile_email(tp):
+    if tp.email.endswith('@gmail.com') and re.match(r'^201\d+$', tp.studentnumber):
+        return '%s@post.au.dk' % tp.studentnumber
+    return tp.email
+
+
 class TutorForwarder(SMTPForwarder, MailholeRelayMixin):
     ERROR_TEMPLATE = """
     Nedenstående email blev ikke leveret til nogen.
@@ -188,7 +194,7 @@ class TutorForwarder(SMTPForwarder, MailholeRelayMixin):
             group_tutors = Tutor.objects.filter(
                 groups=group, year=year,
                 early_termination__isnull=True)
-            group_emails = [tutor.profile.email for tutor in group_tutors]
+            group_emails = [get_tutorprofile_email(tutor.profile) for tutor in group_tutors]
             emails += [email for email in group_emails
                        if email is not None]
 
@@ -224,14 +230,14 @@ class TutorForwarder(SMTPForwarder, MailholeRelayMixin):
 
     def get_rusclass_emails(self, tutors_only, rusclasses):
         tutor_emails = [
-            tutor.profile.email
+            get_tutorprofile_email(tutor.profile)
             for tutor in Tutor.objects.filter(rusclass__in=rusclasses)
         ]
         if tutors_only:
             rus_emails = []
         else:
             rus_emails = [
-                rus.profile.email
+                get_tutorprofile_email(rus.profile)
                 for rus in Rus.objects.filter(rusclass__in=rusclasses)
             ]
 
