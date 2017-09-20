@@ -1,5 +1,6 @@
 # encoding: utf8
 import os
+import re
 import sys
 import json
 import datetime
