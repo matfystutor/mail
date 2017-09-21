@@ -1,5 +1,5 @@
 [Unit]
-Description=orgmail SMTP server
+Description=Mat/Fys-Tutorgruppen SMTP server
 
 [Install]
 WantedBy=multi-user.target
