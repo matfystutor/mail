@@ -116,7 +116,8 @@ class TutorForwarder(SMTPForwarder, MailholeRelayMixin):
             connection.close()
 
     def get_envelope_mailfrom(self, envelope):
-        return 'webfar@matfystutor.dk'
+        # Change to TK 2017-10-02 /Rav
+        return 'admin@TAAGEKAMMERET.dk'.lower()
 
     def translate_recipient(self, rcptto):
         name, domain = rcptto.split('@')
