@@ -128,7 +128,11 @@ class TutorForwarder(SMTPForwarder, MailholeRelayMixin):
             return ['mathiasrav@outlook.dk']
         groups = self.get_groups(name)
         if groups:
-            emails = self.get_group_emails(name, groups)
+            emails = []
+            if 'best' in groups:
+                emails.append('matfys.st.udd@au.dk')
+                groups.remove('best')
+            emails += self.get_group_emails(name, groups)
             if not emails:
                 raise ForwardToAdmin('Grupper er tomme: %r' % (groups,))
             return emails
