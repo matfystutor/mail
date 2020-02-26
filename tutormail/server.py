@@ -174,6 +174,7 @@ class TutorForwarder(SMTPForwarder, MailholeRelayMixin):
         """
 
         # Find the year
+        group_name = group_name.lower()
         if group_name in self.gf_groups:
             year = self.gf_year
         elif group_name.startswith('g') and group_name[1:] in self.gf_groups:
