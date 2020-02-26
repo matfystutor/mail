@@ -129,9 +129,9 @@ class TutorForwarder(SMTPForwarder, MailholeRelayMixin):
         groups = self.get_groups(name)
         if groups:
             emails = []
-            if 'best' in groups:
+            if ('best', self.gf_year) in groups:
                 emails.append('matfys.st.udd@au.dk')
-                groups.remove('best')
+                groups.remove(('best', self.gf_year))
             emails += self.get_group_emails(name, groups)
             if not emails:
                 raise ForwardToAdmin('Grupper er tomme: %r' % (groups,))
