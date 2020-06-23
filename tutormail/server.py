@@ -1,11 +1,12 @@
 # encoding: utf8
+import datetime
+import email.utils
+import itertools
+import json
 import os
 import re
 import sys
-import json
-import datetime
 import textwrap
-import itertools
 import traceback
 
 from emailtunnel import SMTPForwarder, Message, InvalidRecipient, logger
@@ -52,6 +53,10 @@ def get_tutorprofile_email(tp):
 
 
 class TutorForwarder(SMTPForwarder, MailholeRelayMixin):
+    REWRITE_FROM = True
+
+    MAIL_FROM = 'admin@TAAGEKAMMERET.dk'
+
     ERROR_TEMPLATE = """
     Nedenstående email blev ikke leveret til nogen.
 
@@ -115,9 +120,22 @@ class TutorForwarder(SMTPForwarder, MailholeRelayMixin):
         finally:
             connection.close()
 
+    def forward(self, original_envelope, message, recipients, sender):
+        if self.REWRITE_FROM:
+            del message.message["DKIM-Signature"]
+            orig_from = message.get_header("From")
+            parsed = email.utils.getaddresses([orig_from])
+            orig_name = parsed[0][0]
+            name = "%s via matfystutor" % orig_name
+            addr = "webfar@matfystutor.dk"
+            new_from = email.utils.formataddr((name, addr))
+            message.set_unique_header("From", new_from)
+            message.set_unique_header("Reply-To", orig_from)
+
+        super().forward(original_envelope, message, recipients, sender)
+
     def get_envelope_mailfrom(self, envelope):
-        # Change to TK 2017-10-02 /Rav
-        return 'admin@TAAGEKAMMERET.dk'.lower()
+        return self.MAIL_FROM.lower()
 
     def translate_recipient(self, rcptto):
         name, domain = rcptto.split('@')
