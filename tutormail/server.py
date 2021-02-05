@@ -169,7 +169,7 @@ class TutorForwarder(SMTPForwarder, MailholeRelayMixin):
         if groups:
             emails = []
             if any(g[0].handle == 'best' for g in groups):
-                emails.append('matfys.st.udd@au.dk')
+                emails.append('matfys.udd.nat@au.dk')
                 groups = [g for g in groups if g[0].handle != 'best']
             emails += self.get_group_emails(name, groups)
             if not emails:
