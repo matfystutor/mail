@@ -165,6 +165,8 @@ class TutorForwarder(SMTPForwarder, MailholeRelayMixin):
             raise InvalidRecipient(name)
         if name == 'ravtest':
             return ['mathiasrav@outlook.dk']
+        if name == 'burinfo':
+            return self.get_group_emails(name, [self.get_group('buret')])
         groups = self.get_groups(name)
         if groups:
             emails = []
