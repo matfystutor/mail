@@ -176,7 +176,7 @@ class TutorForwarder(SMTPForwarder, MailholeRelayMixin):
             if any(g[0].handle == 'buret' for g in groups):
                 emails.append('buret.udd.nat@au.dk')
                 groups = [g for g in groups if g[0].handle != 'buret']
-            if any(g[0].handle == 'hytte'):
+            if any(g[0].handle == 'hytte' for g in groups):
                 emails.append('matfyshyttebooking@gmail.com')
             emails += self.get_group_emails(name, groups)
             if not emails:
